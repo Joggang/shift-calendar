@@ -600,6 +600,32 @@
   </script>
   <!-- JavaScript 끝 -->
 
+  <script>
+    // PWA Service Worker 등록
+    // 브라우저가 Service Worker를 지원하면 등록 실행
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/shift-calendar/service-worker.js')
+          .then(() => console.log('Service Worker 등록 성공!'))
+          .catch(err => console.log('Service Worker 등록 실패:', err));
+      });
+    }
+  </script>
+```
+
+4. **"Commit changes"** 클릭!
+
+---
+
+현재 `index.html` 맨 아래가 이렇게 되어야 해요:
+```
+    renderMonths();
+
+  </script>
+  <!-- JavaScript 끝 -->
+
+</body>  ← 이 바로 위에 추가!
+
 </body>
 <!-- body 끝 -->
 
