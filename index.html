@@ -1,114 +1,607 @@
 <!DOCTYPE html>
+<!-- HTML5 문서 선언 (항상 맨 위에 있어야 함) -->
+
 <html lang="ko">
+<!-- lang="ko" = 이 페이지가 한국어임을 브라우저에 알려줌 -->
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>교대 달력 - A조</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #f4f6fb; color: #333; font-family: 'Noto Sans KR', sans-serif; min-height: 100vh; padding: 20px; }
-  .header { text-align: center; margin-bottom: 28px; padding: 28px 20px; background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
-  .header h1 { font-size: 1.7rem; font-weight: 700; color: #2c3e50; letter-spacing: 1px; }
-  .header p { color: #888; font-size: 0.85rem; margin-top: 6px; }
-  .legend { display: flex; justify-content: center; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
-  .legend-item { display: flex; align-items: center; gap: 7px; font-size: 0.83rem; color: #555; background: white; padding: 7px 14px; border-radius: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
-  .legend-dot { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: white; }
-  .dot-day { background: #4a90e2; } .dot-night { background: #5c6bc0; } .dot-off { background: #b0bec5; }
-  .months-container { display: flex; flex-direction: column; gap: 20px; }
-  .month-card { background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); overflow: hidden; }
-  .month-header { padding: 14px 20px; background: #f8f9fc; border-bottom: 1px solid #eef0f5; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-  .month-title { font-size: 1.1rem; font-weight: 700; color: #2c3e50; }
-  .month-stats { display: flex; gap: 8px; flex-wrap: wrap; }
-  .stat { font-size: 0.75rem; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
-  .stat-day { background: #e3f0fd; color: #4a90e2; } .stat-night { background: #ede7f6; color: #5c6bc0; } .stat-off { background: #eceff1; color: #78909c; }
-  .calendar-grid { padding: 14px; }
-  .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
-  .weekday { text-align: center; font-size: 0.72rem; font-weight: 600; padding: 5px; color: #aaa; }
-  .weekday:first-child { color: #e57373; } .weekday:last-child { color: #64b5f6; }
-  .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-  .day-cell { border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 54px; position: relative; transition: transform 0.12s; }
-  .day-cell:hover { transform: scale(1.05); }
-  .day-cell.day-shift { background: #e8f2fd; border: 1.5px solid #b3d4f5; }
-  .day-cell.night-shift { background: #ede7f6; border: 1.5px solid #c5b3e6; }
-  .day-cell.off-day { background: #f5f5f5; border: 1.5px solid #e0e0e0; }
-  .day-cell.today { box-shadow: 0 0 0 2.5px #ff7043 !important; }
-  .day-num { font-size: 1rem; font-weight: 700; line-height: 1; }
-  .day-cell.day-shift .day-num { color: #1a6abf; } .day-cell.night-shift .day-num { color: #4527a0; } .day-cell.off-day .day-num { color: #90a4ae; }
-  .shift-label { font-size: 0.6rem; font-weight: 600; margin-top: 3px; }
-  .day-cell.day-shift .shift-label { color: #4a90e2; } .day-cell.night-shift .shift-label { color: #7c57c8; } .day-cell.off-day .shift-label { color: #b0bec5; }
-  .sun .day-num { color: #e57373 !important; } .sat .day-num { color: #64b5f6 !important; }
-  .today-badge { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #ff7043; border-radius: 50%; }
-</style>
-</head>
-<body>
-<div class="header">
-  <h1>🗓️ 교대 달력</h1>
-  <p>A조 · 3조 2교대 · 주간 4일 → 휴무 2일 → 야간 4일 → 휴무 2일</p>
-</div>
-<div class="legend">
-  <div class="legend-item"><div class="legend-dot dot-day">주</div> 주간 근무</div>
-  <div class="legend-item"><div class="legend-dot dot-night">야</div> 야간 근무</div>
-  <div class="legend-item"><div class="legend-dot dot-off">휴</div> 휴무</div>
-</div>
-<div class="months-container" id="months"></div>
-<script>
-  const PATTERN = ['주','주','주','주','휴','휴','야','야','야','야','휴','휴'];
-  const START = new Date(2026, 2, 10);
-  function getShift(date) {
-    const diff = Math.floor((date - START) / (1000*60*60*24));
-    return PATTERN[((diff % 12) + 12) % 12];
-  }
-  function renderMonths() {
-    const container = document.getElementById('months');
-    const today = new Date(); today.setHours(0,0,0,0);
-    const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-    const weekdays = ['일','월','화','수','목','금','토'];
-    for (let m = 2; m <= 7; m++) {
-      const year = 2026;
-      const firstDay = new Date(year, m, 1);
-      const lastDay = new Date(year, m+1, 0);
-      const startDow = firstDay.getDay();
-      let counts = {'주':0,'야':0,'휴':0};
-      for (let d = 1; d <= lastDay.getDate(); d++) counts[getShift(new Date(year,m,d))]++;
-      const card = document.createElement('div');
-      card.className = 'month-card';
-      card.innerHTML = `
-        <div class="month-header">
-          <div class="month-title">${year}년 ${monthNames[m]}</div>
-          <div class="month-stats">
-            <span class="stat stat-day">주간 ${counts['주']}일</span>
-            <span class="stat stat-night">야간 ${counts['야']}일</span>
-            <span class="stat stat-off">휴무 ${counts['휴']}일</span>
-          </div>
-        </div>
-        <div class="calendar-grid">
-          <div class="weekdays">${weekdays.map(w=>`<div class="weekday">${w}</div>`).join('')}</div>
-          <div class="days-grid" id="grid-${m}"></div>
-        </div>`;
-      container.appendChild(card);
-      const grid = card.querySelector(`#grid-${m}`);
-      for (let i = 0; i < startDow; i++) { const e = document.createElement('div'); e.className='day-cell empty'; grid.appendChild(e); }
-      for (let d = 1; d <= lastDay.getDate(); d++) {
-        const date = new Date(year,m,d);
-        const shift = getShift(date);
-        const dow = date.getDay();
-        const isToday = date.getTime() === today.getTime();
-        const cell = document.createElement('div');
-        let cls = 'day-cell';
-        if (shift==='주') cls += ' day-shift';
-        else if (shift==='야') cls += ' night-shift';
-        else cls += ' off-day';
-        if (dow===0) cls += ' sun';
-        if (dow===6) cls += ' sat';
-        if (isToday) cls += ' today';
-        cell.className = cls;
-        cell.innerHTML = `<span class="day-num">${d}</span><span class="shift-label">${shift==='주'?'주간':shift==='야'?'야간':'휴무'}</span>${isToday?'<div class="today-badge"></div>':''}`;
-        grid.appendChild(cell);
-      }
+<!-- head = 화면에 보이지 않는 설정들을 모아두는 곳 -->
+
+  <meta charset="UTF-8" />
+  <!-- 한글이 깨지지 않도록 문자 인코딩 UTF-8 설정 -->
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 모바일 화면 크기에 맞게 자동 조절 -->
+  <!-- width=device-width = 화면 너비를 기기 너비에 맞춤 -->
+  <!-- initial-scale=1.0 = 처음 접속시 100% 크기로 표시 -->
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <!-- 아이폰 홈 화면 추가시 앱처럼 전체화면으로 실행 -->
+
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <!-- 아이폰 상태바(배터리/시간 표시줄) 색상 기본값 설정 -->
+
+  <meta name="apple-mobile-web-app-title" content="교대달력" />
+  <!-- 아이폰 홈 화면에 추가할 때 표시될 앱 이름 -->
+
+  <meta name="theme-color" content="#4a90e2" />
+  <!-- 안드로이드 크롬 상단 주소창 색상을 파란색으로 설정 -->
+
+  <title>교대 달력 - A조</title>
+  <!-- 브라우저 탭에 표시되는 제목 (원하는 이름으로 바꿔도 됨) -->
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <!-- 구글 폰트 'Noto Sans KR' 불러오기 (한국어 예쁜 폰트) -->
+  <!-- wght@300;400;500;700 = 폰트 굵기 종류 불러오기 -->
+
+  <style>
+  /* ================================================
+     CSS 시작
+     CSS = HTML 요소들의 색상, 크기, 위치를 꾸며주는 언어
+  ================================================ */
+
+    /* ------------------------------------------------
+       전체 초기화
+       브라우저마다 기본 여백이 달라서 통일시켜줌
+    ------------------------------------------------ */
+    * {
+      margin: 0;                /* 모든 요소 바깥 여백 제거 */
+      padding: 0;               /* 모든 요소 안쪽 여백 제거 */
+      box-sizing: border-box;   /* 테두리/패딩 포함해서 크기 계산 */
     }
-  }
-  renderMonths();
-</script>
+
+    /* ------------------------------------------------
+       body = 페이지 전체 기본 스타일
+    ------------------------------------------------ */
+    body {
+      background: #f4f6fb;                  /* 전체 배경색 (연한 회색빛 파란색) */
+      color: #333;                          /* 기본 글자색 (진한 회색) */
+      font-family: 'Noto Sans KR', sans-serif; /* 기본 폰트 */
+      min-height: 100vh;                    /* 최소 높이 = 화면 전체 높이 */
+      padding: 16px;                        /* 페이지 가장자리 여백 */
+    }
+
+    /* ------------------------------------------------
+       .header = 상단 제목 카드
+       "🗓️ 교대 달력" 제목이 있는 흰색 영역
+    ------------------------------------------------ */
+    .header {
+      text-align: center;                         /* 텍스트 가운데 정렬 */
+      margin-bottom: 20px;                        /* 아래 여백 (헤더↔범례 간격) */
+      padding: 24px 16px;                         /* 안쪽 여백: 위아래 24px, 좌우 16px */
+      background: white;                          /* 흰색 배경 */
+      border-radius: 16px;                        /* 모서리 둥글게 */
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07); /* 연한 그림자 */
+    }
+
+    .header h1 {
+      font-size: 1.5rem;   /* 제목 크기 (★ 바꾸고 싶으면 숫자 수정) */
+      font-weight: 700;    /* 굵기: 700 = 굵게 */
+      color: #2c3e50;      /* 진한 남색 */
+    }
+
+    .header p {
+      color: #888;         /* 연한 회색 글자 */
+      font-size: 0.82rem;  /* 작은 글자 */
+      margin-top: 6px;     /* 제목과의 간격 */
+      line-height: 1.6;    /* 줄 간격 */
+    }
+
+    /* ------------------------------------------------
+       .legend = 색상 범례 영역
+       주간/야간/휴무 색상 설명 박스들
+    ------------------------------------------------ */
+    .legend {
+      display: flex;           /* 가로로 나란히 배치 */
+      justify-content: center; /* 가운데 정렬 */
+      gap: 10px;               /* 항목 사이 간격 */
+      margin-bottom: 20px;     /* 아래 여백 */
+      flex-wrap: wrap;         /* 화면 좁으면 줄바꿈 허용 */
+    }
+
+    .legend-item {
+      display: flex;                              /* 가로 배치 */
+      align-items: center;                        /* 세로 가운데 정렬 */
+      gap: 6px;                                   /* 박스↔텍스트 간격 */
+      font-size: 0.8rem;                          /* 글자 크기 */
+      color: #555;                                /* 글자색 */
+      background: white;                          /* 흰색 배경 */
+      padding: 6px 12px;                          /* 안쪽 여백 */
+      border-radius: 20px;                        /* 알약 모양으로 둥글게 */
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07); /* 연한 그림자 */
+    }
+
+    .legend-dot {
+      width: 24px;             /* 색상 박스 너비 */
+      height: 24px;            /* 색상 박스 높이 */
+      border-radius: 6px;      /* 살짝 둥근 모서리 */
+      display: flex;           /* 내부 텍스트 가운데 정렬용 */
+      align-items: center;     /* 세로 가운데 */
+      justify-content: center; /* 가로 가운데 */
+      font-size: 0.7rem;       /* 안의 글자 크기 */
+      font-weight: 700;        /* 굵게 */
+      color: white;            /* 흰색 글자 */
+    }
+
+    /* ★ 근무 유형 색상 - 바꾸고 싶으면 색상코드 수정 ★ */
+    .dot-day   { background: #4a90e2; } /* 주간 = 파란색 */
+    .dot-night { background: #5c6bc0; } /* 야간 = 보라색 */
+    .dot-off   { background: #b0bec5; } /* 휴무 = 회색 */
+
+    /* ------------------------------------------------
+       .months-container = 월 카드들을 세로로 쌓는 컨테이너
+    ------------------------------------------------ */
+    .months-container {
+      display: flex;          /* flex 레이아웃 */
+      flex-direction: column; /* 세로 방향으로 쌓기 */
+      gap: 16px;              /* 월 카드 사이 간격 */
+    }
+
+    /* ------------------------------------------------
+       .month-card = 각 월의 카드 (예: 3월 전체)
+    ------------------------------------------------ */
+    .month-card {
+      background: white;                          /* 흰색 배경 */
+      border-radius: 16px;                        /* 둥근 모서리 */
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07); /* 연한 그림자 */
+      overflow: hidden;                           /* 내용이 모서리 밖으로 삐져나오지 않게 */
+    }
+
+    /* ------------------------------------------------
+       .month-header = 월 카드 상단
+       "2026년 3월 | 주간 N일 야간 N일 휴무 N일" 영역
+    ------------------------------------------------ */
+    .month-header {
+      padding: 12px 16px;                  /* 안쪽 여백 */
+      background: #f8f9fc;                 /* 아주 연한 배경색 */
+      border-bottom: 1px solid #eef0f5;    /* 아래 구분선 */
+      display: flex;                       /* 가로 배치 */
+      align-items: center;                 /* 세로 가운데 정렬 */
+      justify-content: space-between;      /* 양쪽 끝으로 배치 */
+      flex-wrap: wrap;                     /* 좁은 화면에서 줄바꿈 */
+      gap: 8px;                            /* 항목 간격 */
+    }
+
+    .month-title {
+      font-size: 1rem;   /* "2026년 3월" 글자 크기 */
+      font-weight: 700;  /* 굵게 */
+      color: #2c3e50;    /* 진한 남색 */
+    }
+
+    .month-stats {
+      display: flex;  /* 배지들 가로 배치 */
+      gap: 6px;       /* 배지 사이 간격 */
+      flex-wrap: wrap; /* 좁은 화면에서 줄바꿈 */
+    }
+
+    .stat {
+      font-size: 0.72rem;  /* 배지 글자 크기 */
+      padding: 3px 9px;    /* 안쪽 여백 */
+      border-radius: 20px; /* 알약 모양 */
+      font-weight: 600;    /* 약간 굵게 */
+    }
+
+    /* 배지별 배경색/글자색 */
+    .stat-day   { background: #e3f0fd; color: #4a90e2; } /* 주간 배지 */
+    .stat-night { background: #ede7f6; color: #5c6bc0; } /* 야간 배지 */
+    .stat-off   { background: #eceff1; color: #78909c; } /* 휴무 배지 */
+
+    /* ------------------------------------------------
+       .calendar-grid = 달력 그리드 전체 감싸는 영역
+    ------------------------------------------------ */
+    .calendar-grid {
+      padding: 12px; /* 달력 안쪽 여백 */
+    }
+
+    /* ------------------------------------------------
+       .weekdays = 요일 헤더 (일 월 화 수 목 금 토)
+    ------------------------------------------------ */
+    .weekdays {
+      display: grid;                          /* 그리드 레이아웃 */
+      grid-template-columns: repeat(7, 1fr);  /* 7칸 균등 분할 */
+      gap: 3px;                               /* 칸 사이 간격 */
+      margin-bottom: 3px;                     /* 날짜 그리드와의 간격 */
+    }
+
+    .weekday {
+      text-align: center; /* 가운데 정렬 */
+      font-size: 0.7rem;  /* 작은 글자 */
+      font-weight: 600;   /* 약간 굵게 */
+      padding: 4px;       /* 여백 */
+      color: #aaa;        /* 연한 회색 */
+    }
+
+    .weekday:first-child { color: #e57373; } /* 일요일 = 빨간색 */
+    .weekday:last-child  { color: #64b5f6; } /* 토요일 = 파란색 */
+
+    /* ------------------------------------------------
+       .days-grid = 날짜 칸들이 놓이는 그리드
+    ------------------------------------------------ */
+    .days-grid {
+      display: grid;                         /* 그리드 레이아웃 */
+      grid-template-columns: repeat(7, 1fr); /* 7칸 균등 분할 */
+      gap: 3px;                              /* 날짜 칸 사이 간격 */
+    }
+
+    /* ------------------------------------------------
+       .day-cell = 날짜 칸 하나의 기본 스타일
+    ------------------------------------------------ */
+    .day-cell {
+      border-radius: 10px;     /* 둥근 모서리 */
+      display: flex;           /* 내용 가운데 정렬용 */
+      flex-direction: column;  /* 숫자와 라벨을 세로로 쌓기 */
+      align-items: center;     /* 가로 가운데 */
+      justify-content: center; /* 세로 가운데 */
+      min-height: 52px;        /* 최소 높이 (★ 바꾸려면 숫자 수정) */
+      position: relative;      /* 자식 요소 위치 기준점 설정 */
+      transition: transform 0.12s; /* 호버 애니메이션 속도 */
+      cursor: default;         /* 마우스 커서 기본 화살표 */
+    }
+
+    .day-cell:hover {
+      transform: scale(1.06); /* 마우스 올리면 106%로 살짝 커짐 */
+    }
+
+    /* ------------------------------------------------
+       날짜 칸 유형별 스타일
+       ★ 배경색/테두리색 바꾸려면 여기 수정 ★
+    ------------------------------------------------ */
+    .day-cell.empty {
+      background: transparent; /* 빈 칸 = 투명 (달력 시작 전 공백) */
+      border: none;            /* 테두리 없음 */
+    }
+
+    .day-cell.day-shift {
+      background: #e8f2fd;           /* 주간 = 연한 파란색 배경 */
+      border: 1.5px solid #b3d4f5;   /* 파란색 테두리 */
+    }
+
+    .day-cell.night-shift {
+      background: #ede7f6;           /* 야간 = 연한 보라색 배경 */
+      border: 1.5px solid #c5b3e6;   /* 보라색 테두리 */
+    }
+
+    .day-cell.off-day {
+      background: #f5f5f5;           /* 휴무 = 연한 회색 배경 */
+      border: 1.5px solid #e0e0e0;   /* 회색 테두리 */
+    }
+
+    .day-cell.today {
+      box-shadow: 0 0 0 2.5px #ff7043 !important;
+      /* 오늘 날짜 = 주황색 테두리 강조 */
+      /* !important = 다른 그림자보다 이게 우선 적용 */
+    }
+
+    /* ------------------------------------------------
+       날짜 숫자 스타일
+    ------------------------------------------------ */
+    .day-num {
+      font-size: 0.95rem; /* 날짜 숫자 크기 */
+      font-weight: 700;   /* 굵게 */
+      line-height: 1;     /* 줄 높이 = 글자 크기와 동일 */
+    }
+
+    /* 유형별 날짜 숫자 색상 */
+    .day-cell.day-shift .day-num   { color: #1a6abf; } /* 주간 = 진한 파랑 */
+    .day-cell.night-shift .day-num { color: #4527a0; } /* 야간 = 진한 보라 */
+    .day-cell.off-day .day-num     { color: #90a4ae; } /* 휴무 = 회색 */
+
+    /* ------------------------------------------------
+       근무 라벨 스타일 (주간 / 야간 / 휴무 텍스트)
+    ------------------------------------------------ */
+    .shift-label {
+      font-size: 0.58rem; /* 아주 작은 글자 */
+      font-weight: 600;   /* 약간 굵게 */
+      margin-top: 3px;    /* 숫자와의 간격 */
+    }
+
+    /* 유형별 라벨 색상 */
+    .day-cell.day-shift .shift-label   { color: #4a90e2; } /* 주간 = 파랑 */
+    .day-cell.night-shift .shift-label { color: #7c57c8; } /* 야간 = 보라 */
+    .day-cell.off-day .shift-label     { color: #b0bec5; } /* 휴무 = 연회색 */
+
+    /* 일요일/토요일 날짜 숫자 색상 (근무 색보다 우선 적용) */
+    .sun .day-num { color: #e57373 !important; } /* 일요일 = 빨강 */
+    .sat .day-num { color: #64b5f6 !important; } /* 토요일 = 파랑 */
+
+    /* ------------------------------------------------
+       .today-badge = 오늘 날짜 우측 상단 주황 점
+    ------------------------------------------------ */
+    .today-badge {
+      position: absolute; /* 부모(.day-cell) 기준 절대 위치 */
+      top: 4px;           /* 위에서 4px */
+      right: 4px;         /* 오른쪽에서 4px */
+      width: 5px;         /* 점 너비 */
+      height: 5px;        /* 점 높이 */
+      background: #ff7043; /* 주황색 */
+      border-radius: 50%; /* 50% = 완전한 원 */
+    }
+
+    /* ================================================
+       반응형 디자인 (화면 크기별 자동 조정)
+       @media = 특정 화면 크기일 때만 적용되는 스타일
+    ================================================ */
+
+    /* ------------------------------------------------
+       스마트폰 세로 모드 (화면 너비 480px 이하)
+    ------------------------------------------------ */
+    @media (max-width: 480px) {
+      body { padding: 10px; }                          /* 전체 여백 줄이기 */
+      .header { padding: 18px 12px; }                  /* 헤더 여백 줄이기 */
+      .header h1 { font-size: 1.2rem; }                /* 제목 글자 줄이기 */
+      .header p { font-size: 0.75rem; }                /* 부제목 글자 줄이기 */
+      .legend-item { font-size: 0.72rem; padding: 5px 10px; } /* 범례 크기 줄이기 */
+      .legend-dot { width: 20px; height: 20px; font-size: 0.62rem; } /* 범례 박스 줄이기 */
+      .month-header { padding: 10px 12px; }            /* 월 헤더 여백 줄이기 */
+      .month-title { font-size: 0.9rem; }              /* 월 제목 글자 줄이기 */
+      .stat { font-size: 0.65rem; padding: 2px 7px; }  /* 배지 크기 줄이기 */
+      .calendar-grid { padding: 8px; }                 /* 달력 여백 줄이기 */
+      .days-grid { gap: 2px; }                         /* 날짜 칸 간격 줄이기 */
+      .weekdays { gap: 2px; }                          /* 요일 간격 줄이기 */
+      .day-cell { min-height: 44px; border-radius: 8px; } /* 날짜 칸 높이 줄이기 */
+      .day-num { font-size: 0.82rem; }                 /* 날짜 숫자 줄이기 */
+      .shift-label { font-size: 0.52rem; }             /* 라벨 글자 줄이기 */
+      .weekday { font-size: 0.62rem; }                 /* 요일 글자 줄이기 */
+    }
+
+    /* ------------------------------------------------
+       아주 작은 화면 (360px 이하 - 구형 소형 스마트폰)
+    ------------------------------------------------ */
+    @media (max-width: 360px) {
+      .day-cell { min-height: 38px; }    /* 날짜 칸 높이 더 줄이기 */
+      .day-num { font-size: 0.75rem; }   /* 날짜 숫자 더 줄이기 */
+      .shift-label { display: none; }    /* 라벨 숨기기 (너무 좁아서) */
+      .today-badge { width: 4px; height: 4px; } /* 오늘 점 크기 줄이기 */
+    }
+
+  </style>
+  <!-- CSS 끝 -->
+
+</head>
+
+<body>
+<!-- body = 화면에 실제로 보이는 내용 시작 -->
+
+  <!-- 상단 제목 영역 -->
+  <div class="header">
+    <h1>🗓️ 교대 달력</h1>
+    <!-- 메인 제목 (이모지 + 텍스트) -->
+
+    <p>A조 &middot; 3조 2교대 &middot; 주간 4일 → 휴무 2일 → 야간 4일 → 휴무 2일</p>
+    <!-- 교대 패턴 설명 / &middot; = 가운데 점(·) 기호 -->
+  </div>
+
+  <!-- 색상 범례 영역 -->
+  <div class="legend">
+
+    <div class="legend-item">
+      <div class="legend-dot dot-day">주</div>
+      주간 근무
+    </div>
+    <!-- 주간 범례: 파란 박스 + "주간 근무" 텍스트 -->
+
+    <div class="legend-item">
+      <div class="legend-dot dot-night">야</div>
+      야간 근무
+    </div>
+    <!-- 야간 범례: 보라 박스 + "야간 근무" 텍스트 -->
+
+    <div class="legend-item">
+      <div class="legend-dot dot-off">휴</div>
+      휴무
+    </div>
+    <!-- 휴무 범례: 회색 박스 + "휴무" 텍스트 -->
+
+  </div>
+
+  <!-- 월별 달력 카드들이 JavaScript에 의해 여기에 자동으로 추가됨 -->
+  <div class="months-container" id="months"></div>
+
+  <script>
+  /* ================================================
+     JavaScript 시작
+     JavaScript = 페이지를 동적으로 만드는 프로그래밍 언어
+  ================================================ */
+
+    /* ------------------------------------------------
+       교대 패턴 설정
+       ★ 패턴을 바꾸고 싶으면 여기를 수정하세요 ★
+    ------------------------------------------------ */
+    const PATTERN = ['주','주','주','주','휴','휴','야','야','야','야','휴','휴'];
+    /* 12일 주기 배열 */
+    /* 주 = 주간 근무, 야 = 야간 근무, 휴 = 휴무 */
+    /* 현재 패턴: 주간4 → 휴무2 → 야간4 → 휴무2 */
+
+    const START = new Date(2026, 2, 10);
+    /* A조 패턴 기준 시작일 = 2026년 3월 10일 (주간 시작) */
+    /* ★ 시작일 바꾸려면: new Date(연도, 월-1, 일) 형식으로 수정 */
+    /* 주의: 월은 0부터 시작함 (1월=0, 2월=1, 3월=2, ...) */
+
+    /* ------------------------------------------------
+       getShift(date) 함수
+       특정 날짜가 주간/야간/휴무인지 계산해서 반환
+    ------------------------------------------------ */
+    function getShift(date) {
+
+      const diff = Math.floor((date - START) / (1000 * 60 * 60 * 24));
+      /* date - START = 시작일로부터 몇 밀리초 지났는지 */
+      /* 1000 * 60 * 60 * 24 = 하루를 밀리초로 환산 */
+      /* Math.floor = 소수점 버리고 정수만 (며칠 지났는지) */
+
+      return PATTERN[((diff % 12) + 12) % 12];
+      /* diff % 12 = 12일 주기로 나눈 나머지 (0~11) */
+      /* (+ 12) % 12 = 시작일 이전 날짜도 올바르게 처리 */
+      /* PATTERN[결과] = 해당 날의 근무 유형 반환 */
+    }
+
+    /* ------------------------------------------------
+       renderMonths() 함수
+       달력 전체를 화면에 그려주는 메인 함수
+    ------------------------------------------------ */
+    function renderMonths() {
+
+      const container = document.getElementById('months');
+      /* id가 'months'인 HTML 요소 찾기 (달력 카드들이 들어갈 곳) */
+
+      const today = new Date();
+      /* 오늘 날짜 가져오기 */
+
+      today.setHours(0, 0, 0, 0);
+      /* 시간을 00:00:00으로 초기화 (날짜 비교시 오류 방지) */
+
+      const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+      /* 월 이름 배열 (인덱스 0 = 1월, 인덱스 11 = 12월) */
+
+      const weekdays = ['일','월','화','수','목','금','토'];
+      /* 요일 이름 배열 (인덱스 0 = 일요일) */
+
+      /* ★ 보여줄 월 범위 설정 ★ */
+      /* 현재: m=2(3월) ~ m=7(8월) 총 6개월 표시 */
+      /* 바꾸려면 숫자 수정: m=0 이면 1월, m=11 이면 12월 */
+      for (let m = 2; m <= 7; m++) {
+
+        const year = 2026;
+        /* ★ 연도 설정 - 바꾸려면 이 숫자 수정 ★ */
+
+        const firstDay = new Date(year, m, 1);
+        /* 해당 월 1일의 Date 객체 생성 */
+
+        const lastDay = new Date(year, m + 1, 0);
+        /* 해당 월 마지막 날의 Date 객체 생성 */
+        /* m+1월의 0일 = 이전 월의 마지막 날 (JS 날짜 트릭) */
+
+        const startDow = firstDay.getDay();
+        /* 1일이 무슨 요일인지 (0=일, 1=월, ... 6=토) */
+        /* 달력 앞 빈 칸 개수 계산에 사용 */
+
+        /* 해당 월 근무 유형별 일수 카운트 */
+        let counts = { '주': 0, '야': 0, '휴': 0 };
+        /* 초기값 모두 0 */
+
+        for (let d = 1; d <= lastDay.getDate(); d++) {
+          /* d = 1일부터 마지막 날까지 반복 */
+          counts[getShift(new Date(year, m, d))]++;
+          /* 해당 날의 근무 유형을 구해서 counts에 1 추가 */
+        }
+
+        /* 월 카드 div 요소 생성 */
+        const card = document.createElement('div');
+        card.className = 'month-card';
+        /* 'month-card' 클래스 부여 */
+
+        /* 카드 안 HTML 내용 작성 */
+        card.innerHTML = `
+          <div class="month-header">
+
+            <div class="month-title">${year}년 ${monthNames[m]}</div>
+            <!-- 예: "2026년 3월" / ${}는 변수 값을 텍스트에 삽입 -->
+
+            <div class="month-stats">
+              <span class="stat stat-day">주간 ${counts['주']}일</span>
+              <!-- 주간 근무 일수 배지 -->
+              <span class="stat stat-night">야간 ${counts['야']}일</span>
+              <!-- 야간 근무 일수 배지 -->
+              <span class="stat stat-off">휴무 ${counts['휴']}일</span>
+              <!-- 휴무 일수 배지 -->
+            </div>
+
+          </div>
+
+          <div class="calendar-grid">
+
+            <div class="weekdays">
+              ${weekdays.map(w => `<div class="weekday">${w}</div>`).join('')}
+              <!-- weekdays 배열을 div로 변환해서 이어붙임 -->
+              <!-- .map() = 배열 각 항목을 변환 -->
+              <!-- .join('') = 변환된 항목들을 이어붙임 -->
+            </div>
+
+            <div class="days-grid" id="grid-${m}"></div>
+            <!-- 날짜 칸들이 들어갈 그리드 (아래 JS코드가 채워줌) -->
+            <!-- id는 월마다 고유하게 부여 (grid-2, grid-3 ...) -->
+
+          </div>
+        `;
+
+        container.appendChild(card);
+        /* 완성된 카드를 months 컨테이너에 추가 */
+
+        const grid = card.querySelector(`#grid-${m}`);
+        /* 카드 안에서 날짜 그리드 요소 찾기 */
+
+        /* 달력 앞 빈 칸 채우기 */
+        /* 예: 1일이 수요일(3)이면 일/월/화 자리에 빈 칸 3개 추가 */
+        for (let i = 0; i < startDow; i++) {
+          const emptyCell = document.createElement('div');
+          emptyCell.className = 'day-cell empty'; /* 빈 칸 클래스 */
+          grid.appendChild(emptyCell);
+        }
+
+        /* 날짜 칸 채우기 (1일부터 마지막 날까지) */
+        for (let d = 1; d <= lastDay.getDate(); d++) {
+
+          const date = new Date(year, m, d);
+          /* 해당 날짜의 Date 객체 생성 */
+
+          const shift = getShift(date);
+          /* 해당 날의 근무 유형 ('주' or '야' or '휴') */
+
+          const dow = date.getDay();
+          /* 해당 날의 요일 (0=일, 1=월, ... 6=토) */
+
+          const isToday = date.getTime() === today.getTime();
+          /* 오늘인지 확인 */
+          /* .getTime() = 밀리초 숫자로 변환해서 정확하게 비교 */
+          /* true = 오늘, false = 오늘 아님 */
+
+          const cell = document.createElement('div');
+          /* 날짜 칸 div 생성 */
+
+          /* 클래스 조합 */
+          let cls = 'day-cell';                              /* 기본 클래스 */
+          if (shift === '주')      cls += ' day-shift';      /* 주간이면 추가 */
+          else if (shift === '야') cls += ' night-shift';    /* 야간이면 추가 */
+          else                    cls += ' off-day';         /* 휴무이면 추가 */
+          if (dow === 0) cls += ' sun';                      /* 일요일이면 추가 */
+          if (dow === 6) cls += ' sat';                      /* 토요일이면 추가 */
+          if (isToday)  cls += ' today';                     /* 오늘이면 추가 */
+
+          cell.className = cls;
+          /* 완성된 클래스 적용 */
+
+          /* 날짜 칸 안 HTML 내용 */
+          cell.innerHTML = `
+            <span class="day-num">${d}</span>
+            <!-- 날짜 숫자 표시 (예: 10) -->
+
+            <span class="shift-label">${shift === '주' ? '주간' : shift === '야' ? '야간' : '휴무'}</span>
+            <!-- 근무 라벨 표시 -->
+            <!-- 삼항 연산자: 조건 ? 참일때 : 거짓일때 -->
+            <!-- shift가 '주'면 '주간', '야'면 '야간', 그 외면 '휴무' -->
+
+            ${isToday ? '<div class="today-badge"></div>' : ''}
+            <!-- 오늘이면 주황 점 추가, 아니면 아무것도 추가 안 함 -->
+          `;
+
+          grid.appendChild(cell);
+          /* 완성된 날짜 칸을 그리드에 추가 */
+        }
+        /* 날짜 루프 끝 */
+
+      }
+      /* 월 루프 끝 */
+
+    }
+    /* renderMonths 함수 끝 */
+
+    renderMonths();
+    /* 함수 호출 = 페이지 로드시 달력을 화면에 그림 */
+
+  </script>
+  <!-- JavaScript 끝 -->
+
 </body>
+<!-- body 끝 -->
+
 </html>
+<!-- HTML 문서 끝 -->
