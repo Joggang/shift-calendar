@@ -3,141 +3,208 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>교대달력 코드 뷰어</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="교대달력" />
+  <meta name="theme-color" content="#4a90e2" />
+  <title>교대 달력 - A조</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #1e1e2e; color: #cdd6f4; font-family: 'Noto Sans KR', sans-serif; min-height: 100vh; }
-
-    .top-bar {
-      position: sticky; top: 0; z-index: 100;
-      background: #181825;
-      padding: 14px 20px;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid #313244;
-      flex-wrap: wrap; gap: 10px;
-    }
-    .top-bar h1 { font-size: 1rem; color: #cba6f7; font-weight: 700; }
-    .top-bar p  { font-size: 0.75rem; color: #6c7086; margin-top: 2px; }
-
-    .copy-btn {
-      background: #89b4fa;
-      color: #1e1e2e;
-      border: none;
-      padding: 10px 22px;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
-      white-space: nowrap;
-    }
-    .copy-btn:hover  { background: #b4befe; transform: scale(1.03); }
-    .copy-btn:active { transform: scale(0.97); }
-    .copy-btn.copied { background: #a6e3a1; }
-
-    .code-wrap {
-      padding: 20px;
-      overflow-x: auto;
-    }
-
-    pre {
-      background: #181825;
-      border-radius: 12px;
-      padding: 20px;
-      font-size: 0.78rem;
-      line-height: 1.7;
-      overflow-x: auto;
-      white-space: pre;
-      border: 1px solid #313244;
-    }
-
-    code {
-      font-family: 'Consolas', 'Courier New', monospace;
-      color: #cdd6f4;
-    }
-
-    /* 줄 번호 */
-    .line { display: flex; }
-    .ln   { color: #45475a; min-width: 40px; user-select: none; padding-right: 16px; text-align: right; }
-    .lc   { color: #cdd6f4; white-space: pre; }
-
-    /* 문법 강조 */
-    .kw   { color: #cba6f7; } /* 키워드 */
-    .str  { color: #a6e3a1; } /* 문자열 */
-    .cm   { color: #585b70; font-style: italic; } /* 주석 */
-    .fn   { color: #89b4fa; } /* 함수 */
-    .num  { color: #fab387; } /* 숫자 */
-    .tag  { color: #f38ba8; } /* HTML 태그 */
-    .attr { color: #fab387; } /* HTML 속성 */
-
-    /* 모바일 */
+    body { background: #f4f6fb; color: #333; font-family: 'Noto Sans KR', sans-serif; min-height: 100vh; padding: 16px; }
+    .header { text-align: center; margin-bottom: 20px; padding: 24px 16px; background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+    .header h1 { font-size: 1.5rem; font-weight: 700; color: #2c3e50; }
+    .header p { color: #888; font-size: 0.82rem; margin-top: 6px; line-height: 1.6; }
+    .legend { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #555; background: white; padding: 6px 12px; border-radius: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+    .legend-dot { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: white; }
+    .dot-day { background: #4a90e2; }
+    .dot-night { background: #5c6bc0; }
+    .dot-off { background: #b0bec5; }
+    .months-container { display: flex; flex-direction: column; gap: 16px; }
+    .month-card { background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); overflow: hidden; }
+    .month-header { padding: 12px 16px; background: #f8f9fc; border-bottom: 1px solid #eef0f5; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .month-title { font-size: 1rem; font-weight: 700; color: #2c3e50; }
+    .month-stats { display: flex; gap: 6px; flex-wrap: wrap; }
+    .stat { font-size: 0.72rem; padding: 3px 9px; border-radius: 20px; font-weight: 600; }
+    .stat-day   { background: #e3f0fd; color: #4a90e2; }
+    .stat-night { background: #ede7f6; color: #5c6bc0; }
+    .stat-off   { background: #eceff1; color: #78909c; }
+    .calendar-grid { padding: 12px; }
+    .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 3px; }
+    .weekday { text-align: center; font-size: 0.7rem; font-weight: 600; padding: 4px; color: #aaa; }
+    .weekday:first-child { color: #e57373; }
+    .weekday:last-child  { color: #64b5f6; }
+    .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .day-cell { border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 52px; position: relative; transition: transform 0.12s; cursor: default; }
+    .day-cell:hover { transform: scale(1.06); }
+    .day-cell.empty { background: transparent; border: none; }
+    .day-cell.day-shift   { background: #e8f2fd; border: 1.5px solid #b3d4f5; }
+    .day-cell.night-shift { background: #ede7f6; border: 1.5px solid #c5b3e6; }
+    .day-cell.off-day     { background: #f5f5f5; border: 1.5px solid #e0e0e0; }
+    .day-cell.today { box-shadow: 0 0 0 2.5px #ff7043 !important; }
+    .day-num { font-size: 0.95rem; font-weight: 700; line-height: 1; }
+    .day-cell.day-shift   .day-num { color: #1a6abf; }
+    .day-cell.night-shift .day-num { color: #4527a0; }
+    .day-cell.off-day     .day-num { color: #90a4ae; }
+    .shift-label { font-size: 0.58rem; font-weight: 600; margin-top: 3px; }
+    .day-cell.day-shift   .shift-label { color: #4a90e2; }
+    .day-cell.night-shift .shift-label { color: #7c57c8; }
+    .day-cell.off-day     .shift-label { color: #b0bec5; }
+    .sun .day-num { color: #e57373 !important; }
+    .sat .day-num { color: #64b5f6 !important; }
+    .today-badge { position: absolute; top: 4px; right: 4px; width: 5px; height: 5px; background: #ff7043; border-radius: 50%; }
     @media (max-width: 480px) {
-      pre { font-size: 0.7rem; padding: 12px; }
-      .ln { min-width: 30px; padding-right: 10px; }
-      .top-bar h1 { font-size: 0.9rem; }
+      body { padding: 10px; }
+      .header h1 { font-size: 1.2rem; }
+      .header p { font-size: 0.75rem; }
+      .month-title { font-size: 0.9rem; }
+      .stat { font-size: 0.65rem; padding: 2px 7px; }
+      .calendar-grid { padding: 8px; }
+      .days-grid { gap: 2px; }
+      .weekdays { gap: 2px; }
+      .day-cell { min-height: 44px; border-radius: 8px; }
+      .day-num { font-size: 0.82rem; }
+      .shift-label { font-size: 0.52rem; }
+      .weekday { font-size: 0.62rem; }
+    }
+    @media (max-width: 360px) {
+      .day-cell { min-height: 38px; }
+      .day-num { font-size: 0.75rem; }
+      .shift-label { display: none; }
     }
   </style>
 </head>
 <body>
 
-<div class="top-bar">
-  <div>
-    <h1>📋 교대달력 전체 코드</h1>
-    <p>주석 포함 · 모바일 최적화 완료</p>
+  <div class="header">
+    <h1>🗓️ 교대 달력</h1>
+    <p>A조 · 3조 2교대 · 주간 4일 → 휴무 2일 → 야간 4일 → 휴무 2일</p>
   </div>
-  <button class="copy-btn" id="copyBtn" onclick="copyCode()">⎘ 전체 복사</button>
-</div>
 
-<div class="code-wrap">
-  <pre id="codeBlock"><code id="codeContent"></code></pre>
-</div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot dot-day">주</div> 주간 근무</div>
+    <div class="legend-item"><div class="legend-dot dot-night">야</div> 야간 근무</div>
+    <div class="legend-item"><div class="legend-dot dot-off">휴</div> 휴무</div>
+  </div>
 
-<script>
-const rawCode = "<!DOCTYPE html>\n<!-- HTML5 \ubb38\uc11c \uc120\uc5b8 (\ud56d\uc0c1 \ub9e8 \uc704\uc5d0 \uc788\uc5b4\uc57c \ud568) -->\n\n<html lang=\"ko\">\n<!-- lang=\"ko\" = \uc774 \ud398\uc774\uc9c0\uac00 \ud55c\uad6d\uc5b4\uc784\uc744 \ube0c\ub77c\uc6b0\uc800\uc5d0 \uc54c\ub824\uc90c -->\n\n<head>\n<!-- head = \ud654\uba74\uc5d0 \ubcf4\uc774\uc9c0 \uc54a\ub294 \uc124\uc815\ub4e4\uc744 \ubaa8\uc544\ub450\ub294 \uacf3 -->\n\n  <meta charset=\"UTF-8\" />\n  <!-- \ud55c\uae00\uc774 \uae68\uc9c0\uc9c0 \uc54a\ub3c4\ub85d \ubb38\uc790 \uc778\ucf54\ub529 UTF-8 \uc124\uc815 -->\n\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n  <!-- \ubaa8\ubc14\uc77c \ud654\uba74 \ud06c\uae30\uc5d0 \ub9de\uac8c \uc790\ub3d9 \uc870\uc808 -->\n  <!-- width=device-width = \ud654\uba74 \ub108\ube44\ub97c \uae30\uae30 \ub108\ube44\uc5d0 \ub9de\ucda4 -->\n  <!-- initial-scale=1.0 = \ucc98\uc74c \uc811\uc18d\uc2dc 100% \ud06c\uae30\ub85c \ud45c\uc2dc -->\n\n  <meta name=\"apple-mobile-web-app-capable\" content=\"yes\" />\n  <!-- \uc544\uc774\ud3f0 \ud648 \ud654\uba74 \ucd94\uac00\uc2dc \uc571\ucc98\ub7fc \uc804\uccb4\ud654\uba74\uc73c\ub85c \uc2e4\ud589 -->\n\n  <meta name=\"apple-mobile-web-app-status-bar-style\" content=\"default\" />\n  <!-- \uc544\uc774\ud3f0 \uc0c1\ud0dc\ubc14(\ubc30\ud130\ub9ac/\uc2dc\uac04 \ud45c\uc2dc\uc904) \uc0c9\uc0c1 \uae30\ubcf8\uac12 \uc124\uc815 -->\n\n  <meta name=\"apple-mobile-web-app-title\" content=\"\uad50\ub300\ub2ec\ub825\" />\n  <!-- \uc544\uc774\ud3f0 \ud648 \ud654\uba74\uc5d0 \ucd94\uac00\ud560 \ub54c \ud45c\uc2dc\ub420 \uc571 \uc774\ub984 -->\n\n  <meta name=\"theme-color\" content=\"#4a90e2\" />\n  <!-- \uc548\ub4dc\ub85c\uc774\ub4dc \ud06c\ub86c \uc0c1\ub2e8 \uc8fc\uc18c\ucc3d \uc0c9\uc0c1\uc744 \ud30c\ub780\uc0c9\uc73c\ub85c \uc124\uc815 -->\n\n  <title>\uad50\ub300 \ub2ec\ub825 - A\uc870</title>\n  <!-- \ube0c\ub77c\uc6b0\uc800 \ud0ed\uc5d0 \ud45c\uc2dc\ub418\ub294 \uc81c\ubaa9 (\uc6d0\ud558\ub294 \uc774\ub984\uc73c\ub85c \ubc14\uafd4\ub3c4 \ub428) -->\n\n  <link href=\"https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap\" rel=\"stylesheet\" />\n  <!-- \uad6c\uae00 \ud3f0\ud2b8 'Noto Sans KR' \ubd88\ub7ec\uc624\uae30 (\ud55c\uad6d\uc5b4 \uc608\uc05c \ud3f0\ud2b8) -->\n  <!-- wght@300;400;500;700 = \ud3f0\ud2b8 \uad75\uae30 \uc885\ub958 \ubd88\ub7ec\uc624\uae30 -->\n\n  <style>\n  /* ================================================\n     CSS \uc2dc\uc791\n     CSS = HTML \uc694\uc18c\ub4e4\uc758 \uc0c9\uc0c1, \ud06c\uae30, \uc704\uce58\ub97c \uafb8\uba70\uc8fc\ub294 \uc5b8\uc5b4\n  ================================================ */\n\n    /* ------------------------------------------------\n       \uc804\uccb4 \ucd08\uae30\ud654\n       \ube0c\ub77c\uc6b0\uc800\ub9c8\ub2e4 \uae30\ubcf8 \uc5ec\ubc31\uc774 \ub2ec\ub77c\uc11c \ud1b5\uc77c\uc2dc\ucf1c\uc90c\n    ------------------------------------------------ */\n    * {\n      margin: 0;                /* \ubaa8\ub4e0 \uc694\uc18c \ubc14\uae65 \uc5ec\ubc31 \uc81c\uac70 */\n      padding: 0;               /* \ubaa8\ub4e0 \uc694\uc18c \uc548\ucabd \uc5ec\ubc31 \uc81c\uac70 */\n      box-sizing: border-box;   /* \ud14c\ub450\ub9ac/\ud328\ub529 \ud3ec\ud568\ud574\uc11c \ud06c\uae30 \uacc4\uc0b0 */\n    }\n\n    /* ------------------------------------------------\n       body = \ud398\uc774\uc9c0 \uc804\uccb4 \uae30\ubcf8 \uc2a4\ud0c0\uc77c\n    ------------------------------------------------ */\n    body {\n      background: #f4f6fb;                  /* \uc804\uccb4 \ubc30\uacbd\uc0c9 (\uc5f0\ud55c \ud68c\uc0c9\ube5b \ud30c\ub780\uc0c9) */\n      color: #333;                          /* \uae30\ubcf8 \uae00\uc790\uc0c9 (\uc9c4\ud55c \ud68c\uc0c9) */\n      font-family: 'Noto Sans KR', sans-serif; /* \uae30\ubcf8 \ud3f0\ud2b8 */\n      min-height: 100vh;                    /* \ucd5c\uc18c \ub192\uc774 = \ud654\uba74 \uc804\uccb4 \ub192\uc774 */\n      padding: 16px;                        /* \ud398\uc774\uc9c0 \uac00\uc7a5\uc790\ub9ac \uc5ec\ubc31 */\n    }\n\n    /* ------------------------------------------------\n       .header = \uc0c1\ub2e8 \uc81c\ubaa9 \uce74\ub4dc\n       \"\ud83d\uddd3\ufe0f \uad50\ub300 \ub2ec\ub825\" \uc81c\ubaa9\uc774 \uc788\ub294 \ud770\uc0c9 \uc601\uc5ed\n    ------------------------------------------------ */\n    .header {\n      text-align: center;                         /* \ud14d\uc2a4\ud2b8 \uac00\uc6b4\ub370 \uc815\ub82c */\n      margin-bottom: 20px;                        /* \uc544\ub798 \uc5ec\ubc31 (\ud5e4\ub354\u2194\ubc94\ub840 \uac04\uaca9) */\n      padding: 24px 16px;                         /* \uc548\ucabd \uc5ec\ubc31: \uc704\uc544\ub798 24px, \uc88c\uc6b0 16px */\n      background: white;                          /* \ud770\uc0c9 \ubc30\uacbd */\n      border-radius: 16px;                        /* \ubaa8\uc11c\ub9ac \ub465\uae00\uac8c */\n      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07); /* \uc5f0\ud55c \uadf8\ub9bc\uc790 */\n    }\n\n    .header h1 {\n      font-size: 1.5rem;   /* \uc81c\ubaa9 \ud06c\uae30 (\u2605 \ubc14\uafb8\uace0 \uc2f6\uc73c\uba74 \uc22b\uc790 \uc218\uc815) */\n      font-weight: 700;    /* \uad75\uae30: 700 = \uad75\uac8c */\n      color: #2c3e50;      /* \uc9c4\ud55c \ub0a8\uc0c9 */\n    }\n\n    .header p {\n      color: #888;         /* \uc5f0\ud55c \ud68c\uc0c9 \uae00\uc790 */\n      font-size: 0.82rem;  /* \uc791\uc740 \uae00\uc790 */\n      margin-top: 6px;     /* \uc81c\ubaa9\uacfc\uc758 \uac04\uaca9 */\n      line-height: 1.6;    /* \uc904 \uac04\uaca9 */\n    }\n\n    /* ------------------------------------------------\n       .legend = \uc0c9\uc0c1 \ubc94\ub840 \uc601\uc5ed\n       \uc8fc\uac04/\uc57c\uac04/\ud734\ubb34 \uc0c9\uc0c1 \uc124\uba85 \ubc15\uc2a4\ub4e4\n    ------------------------------------------------ */\n    .legend {\n      display: flex;           /* \uac00\ub85c\ub85c \ub098\ub780\ud788 \ubc30\uce58 */\n      justify-content: center; /* \uac00\uc6b4\ub370 \uc815\ub82c */\n      gap: 10px;               /* \ud56d\ubaa9 \uc0ac\uc774 \uac04\uaca9 */\n      margin-bottom: 20px;     /* \uc544\ub798 \uc5ec\ubc31 */\n      flex-wrap: wrap;         /* \ud654\uba74 \uc881\uc73c\uba74 \uc904\ubc14\uafc8 \ud5c8\uc6a9 */\n    }\n\n    .legend-item {\n      display: flex;                              /* \uac00\ub85c \ubc30\uce58 */\n      align-items: center;                        /* \uc138\ub85c \uac00\uc6b4\ub370 \uc815\ub82c */\n      gap: 6px;                                   /* \ubc15\uc2a4\u2194\ud14d\uc2a4\ud2b8 \uac04\uaca9 */\n      font-size: 0.8rem;                          /* \uae00\uc790 \ud06c\uae30 */\n      color: #555;                                /* \uae00\uc790\uc0c9 */\n      background: white;                          /* \ud770\uc0c9 \ubc30\uacbd */\n      padding: 6px 12px;                          /* \uc548\ucabd \uc5ec\ubc31 */\n      border-radius: 20px;                        /* \uc54c\uc57d \ubaa8\uc591\uc73c\ub85c \ub465\uae00\uac8c */\n      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07); /* \uc5f0\ud55c \uadf8\ub9bc\uc790 */\n    }\n\n    .legend-dot {\n      width: 24px;             /* \uc0c9\uc0c1 \ubc15\uc2a4 \ub108\ube44 */\n      height: 24px;            /* \uc0c9\uc0c1 \ubc15\uc2a4 \ub192\uc774 */\n      border-radius: 6px;      /* \uc0b4\uc9dd \ub465\uadfc \ubaa8\uc11c\ub9ac */\n      display: flex;           /* \ub0b4\ubd80 \ud14d\uc2a4\ud2b8 \uac00\uc6b4\ub370 \uc815\ub82c\uc6a9 */\n      align-items: center;     /* \uc138\ub85c \uac00\uc6b4\ub370 */\n      justify-content: center; /* \uac00\ub85c \uac00\uc6b4\ub370 */\n      font-size: 0.7rem;       /* \uc548\uc758 \uae00\uc790 \ud06c\uae30 */\n      font-weight: 700;        /* \uad75\uac8c */\n      color: white;            /* \ud770\uc0c9 \uae00\uc790 */\n    }\n\n    /* \u2605 \uadfc\ubb34 \uc720\ud615 \uc0c9\uc0c1 - \ubc14\uafb8\uace0 \uc2f6\uc73c\uba74 \uc0c9\uc0c1\ucf54\ub4dc \uc218\uc815 \u2605 */\n    .dot-day   { background: #4a90e2; } /* \uc8fc\uac04 = \ud30c\ub780\uc0c9 */\n    .dot-night { background: #5c6bc0; } /* \uc57c\uac04 = \ubcf4\ub77c\uc0c9 */\n    .dot-off   { background: #b0bec5; } /* \ud734\ubb34 = \ud68c\uc0c9 */\n\n    /* ------------------------------------------------\n       .months-container = \uc6d4 \uce74\ub4dc\ub4e4\uc744 \uc138\ub85c\ub85c \uc313\ub294 \ucee8\ud14c\uc774\ub108\n    ------------------------------------------------ */\n    .months-container {\n      display: flex;          /* flex \ub808\uc774\uc544\uc6c3 */\n      flex-direction: column; /* \uc138\ub85c \ubc29\ud5a5\uc73c\ub85c \uc313\uae30 */\n      gap: 16px;              /* \uc6d4 \uce74\ub4dc \uc0ac\uc774 \uac04\uaca9 */\n    }\n\n    /* ------------------------------------------------\n       .month-card = \uac01 \uc6d4\uc758 \uce74\ub4dc (\uc608: 3\uc6d4 \uc804\uccb4)\n    ------------------------------------------------ */\n    .month-card {\n      background: white;                          /* \ud770\uc0c9 \ubc30\uacbd */\n      border-radius: 16px;                        /* \ub465\uadfc \ubaa8\uc11c\ub9ac */\n      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07); /* \uc5f0\ud55c \uadf8\ub9bc\uc790 */\n      overflow: hidden;                           /* \ub0b4\uc6a9\uc774 \ubaa8\uc11c\ub9ac \ubc16\uc73c\ub85c \uc090\uc838\ub098\uc624\uc9c0 \uc54a\uac8c */\n    }\n\n    /* ------------------------------------------------\n       .month-header = \uc6d4 \uce74\ub4dc \uc0c1\ub2e8\n       \"2026\ub144 3\uc6d4 | \uc8fc\uac04 N\uc77c \uc57c\uac04 N\uc77c \ud734\ubb34 N\uc77c\" \uc601\uc5ed\n    ------------------------------------------------ */\n    .month-header {\n      padding: 12px 16px;                  /* \uc548\ucabd \uc5ec\ubc31 */\n      background: #f8f9fc;                 /* \uc544\uc8fc \uc5f0\ud55c \ubc30\uacbd\uc0c9 */\n      border-bottom: 1px solid #eef0f5;    /* \uc544\ub798 \uad6c\ubd84\uc120 */\n      display: flex;                       /* \uac00\ub85c \ubc30\uce58 */\n      align-items: center;                 /* \uc138\ub85c \uac00\uc6b4\ub370 \uc815\ub82c */\n      justify-content: space-between;      /* \uc591\ucabd \ub05d\uc73c\ub85c \ubc30\uce58 */\n      flex-wrap: wrap;                     /* \uc881\uc740 \ud654\uba74\uc5d0\uc11c \uc904\ubc14\uafc8 */\n      gap: 8px;                            /* \ud56d\ubaa9 \uac04\uaca9 */\n    }\n\n    .month-title {\n      font-size: 1rem;   /* \"2026\ub144 3\uc6d4\" \uae00\uc790 \ud06c\uae30 */\n      font-weight: 700;  /* \uad75\uac8c */\n      color: #2c3e50;    /* \uc9c4\ud55c \ub0a8\uc0c9 */\n    }\n\n    .month-stats {\n      display: flex;  /* \ubc30\uc9c0\ub4e4 \uac00\ub85c \ubc30\uce58 */\n      gap: 6px;       /* \ubc30\uc9c0 \uc0ac\uc774 \uac04\uaca9 */\n      flex-wrap: wrap; /* \uc881\uc740 \ud654\uba74\uc5d0\uc11c \uc904\ubc14\uafc8 */\n    }\n\n    .stat {\n      font-size: 0.72rem;  /* \ubc30\uc9c0 \uae00\uc790 \ud06c\uae30 */\n      padding: 3px 9px;    /* \uc548\ucabd \uc5ec\ubc31 */\n      border-radius: 20px; /* \uc54c\uc57d \ubaa8\uc591 */\n      font-weight: 600;    /* \uc57d\uac04 \uad75\uac8c */\n    }\n\n    /* \ubc30\uc9c0\ubcc4 \ubc30\uacbd\uc0c9/\uae00\uc790\uc0c9 */\n    .stat-day   { background: #e3f0fd; color: #4a90e2; } /* \uc8fc\uac04 \ubc30\uc9c0 */\n    .stat-night { background: #ede7f6; color: #5c6bc0; } /* \uc57c\uac04 \ubc30\uc9c0 */\n    .stat-off   { background: #eceff1; color: #78909c; } /* \ud734\ubb34 \ubc30\uc9c0 */\n\n    /* ------------------------------------------------\n       .calendar-grid = \ub2ec\ub825 \uadf8\ub9ac\ub4dc \uc804\uccb4 \uac10\uc2f8\ub294 \uc601\uc5ed\n    ------------------------------------------------ */\n    .calendar-grid {\n      padding: 12px; /* \ub2ec\ub825 \uc548\ucabd \uc5ec\ubc31 */\n    }\n\n    /* ------------------------------------------------\n       .weekdays = \uc694\uc77c \ud5e4\ub354 (\uc77c \uc6d4 \ud654 \uc218 \ubaa9 \uae08 \ud1a0)\n    ------------------------------------------------ */\n    .weekdays {\n      display: grid;                          /* \uadf8\ub9ac\ub4dc \ub808\uc774\uc544\uc6c3 */\n      grid-template-columns: repeat(7, 1fr);  /* 7\uce78 \uade0\ub4f1 \ubd84\ud560 */\n      gap: 3px;                               /* \uce78 \uc0ac\uc774 \uac04\uaca9 */\n      margin-bottom: 3px;                     /* \ub0a0\uc9dc \uadf8\ub9ac\ub4dc\uc640\uc758 \uac04\uaca9 */\n    }\n\n    .weekday {\n      text-align: center; /* \uac00\uc6b4\ub370 \uc815\ub82c */\n      font-size: 0.7rem;  /* \uc791\uc740 \uae00\uc790 */\n      font-weight: 600;   /* \uc57d\uac04 \uad75\uac8c */\n      padding: 4px;       /* \uc5ec\ubc31 */\n      color: #aaa;        /* \uc5f0\ud55c \ud68c\uc0c9 */\n    }\n\n    .weekday:first-child { color: #e57373; } /* \uc77c\uc694\uc77c = \ube68\uac04\uc0c9 */\n    .weekday:last-child  { color: #64b5f6; } /* \ud1a0\uc694\uc77c = \ud30c\ub780\uc0c9 */\n\n    /* ------------------------------------------------\n       .days-grid = \ub0a0\uc9dc \uce78\ub4e4\uc774 \ub193\uc774\ub294 \uadf8\ub9ac\ub4dc\n    ------------------------------------------------ */\n    .days-grid {\n      display: grid;                         /* \uadf8\ub9ac\ub4dc \ub808\uc774\uc544\uc6c3 */\n      grid-template-columns: repeat(7, 1fr); /* 7\uce78 \uade0\ub4f1 \ubd84\ud560 */\n      gap: 3px;                              /* \ub0a0\uc9dc \uce78 \uc0ac\uc774 \uac04\uaca9 */\n    }\n\n    /* ------------------------------------------------\n       .day-cell = \ub0a0\uc9dc \uce78 \ud558\ub098\uc758 \uae30\ubcf8 \uc2a4\ud0c0\uc77c\n    ------------------------------------------------ */\n    .day-cell {\n      border-radius: 10px;     /* \ub465\uadfc \ubaa8\uc11c\ub9ac */\n      display: flex;           /* \ub0b4\uc6a9 \uac00\uc6b4\ub370 \uc815\ub82c\uc6a9 */\n      flex-direction: column;  /* \uc22b\uc790\uc640 \ub77c\ubca8\uc744 \uc138\ub85c\ub85c \uc313\uae30 */\n      align-items: center;     /* \uac00\ub85c \uac00\uc6b4\ub370 */\n      justify-content: center; /* \uc138\ub85c \uac00\uc6b4\ub370 */\n      min-height: 52px;        /* \ucd5c\uc18c \ub192\uc774 (\u2605 \ubc14\uafb8\ub824\uba74 \uc22b\uc790 \uc218\uc815) */\n      position: relative;      /* \uc790\uc2dd \uc694\uc18c \uc704\uce58 \uae30\uc900\uc810 \uc124\uc815 */\n      transition: transform 0.12s; /* \ud638\ubc84 \uc560\ub2c8\uba54\uc774\uc158 \uc18d\ub3c4 */\n      cursor: default;         /* \ub9c8\uc6b0\uc2a4 \ucee4\uc11c \uae30\ubcf8 \ud654\uc0b4\ud45c */\n    }\n\n    .day-cell:hover {\n      transform: scale(1.06); /* \ub9c8\uc6b0\uc2a4 \uc62c\ub9ac\uba74 106%\ub85c \uc0b4\uc9dd \ucee4\uc9d0 */\n    }\n\n    /* ------------------------------------------------\n       \ub0a0\uc9dc \uce78 \uc720\ud615\ubcc4 \uc2a4\ud0c0\uc77c\n       \u2605 \ubc30\uacbd\uc0c9/\ud14c\ub450\ub9ac\uc0c9 \ubc14\uafb8\ub824\uba74 \uc5ec\uae30 \uc218\uc815 \u2605\n    ------------------------------------------------ */\n    .day-cell.empty {\n      background: transparent; /* \ube48 \uce78 = \ud22c\uba85 (\ub2ec\ub825 \uc2dc\uc791 \uc804 \uacf5\ubc31) */\n      border: none;            /* \ud14c\ub450\ub9ac \uc5c6\uc74c */\n    }\n\n    .day-cell.day-shift {\n      background: #e8f2fd;           /* \uc8fc\uac04 = \uc5f0\ud55c \ud30c\ub780\uc0c9 \ubc30\uacbd */\n      border: 1.5px solid #b3d4f5;   /* \ud30c\ub780\uc0c9 \ud14c\ub450\ub9ac */\n    }\n\n    .day-cell.night-shift {\n      background: #ede7f6;           /* \uc57c\uac04 = \uc5f0\ud55c \ubcf4\ub77c\uc0c9 \ubc30\uacbd */\n      border: 1.5px solid #c5b3e6;   /* \ubcf4\ub77c\uc0c9 \ud14c\ub450\ub9ac */\n    }\n\n    .day-cell.off-day {\n      background: #f5f5f5;           /* \ud734\ubb34 = \uc5f0\ud55c \ud68c\uc0c9 \ubc30\uacbd */\n      border: 1.5px solid #e0e0e0;   /* \ud68c\uc0c9 \ud14c\ub450\ub9ac */\n    }\n\n    .day-cell.today {\n      box-shadow: 0 0 0 2.5px #ff7043 !important;\n      /* \uc624\ub298 \ub0a0\uc9dc = \uc8fc\ud669\uc0c9 \ud14c\ub450\ub9ac \uac15\uc870 */\n      /* !important = \ub2e4\ub978 \uadf8\ub9bc\uc790\ubcf4\ub2e4 \uc774\uac8c \uc6b0\uc120 \uc801\uc6a9 */\n    }\n\n    /* ------------------------------------------------\n       \ub0a0\uc9dc \uc22b\uc790 \uc2a4\ud0c0\uc77c\n    ------------------------------------------------ */\n    .day-num {\n      font-size: 0.95rem; /* \ub0a0\uc9dc \uc22b\uc790 \ud06c\uae30 */\n      font-weight: 700;   /* \uad75\uac8c */\n      line-height: 1;     /* \uc904 \ub192\uc774 = \uae00\uc790 \ud06c\uae30\uc640 \ub3d9\uc77c */\n    }\n\n    /* \uc720\ud615\ubcc4 \ub0a0\uc9dc \uc22b\uc790 \uc0c9\uc0c1 */\n    .day-cell.day-shift .day-num   { color: #1a6abf; } /* \uc8fc\uac04 = \uc9c4\ud55c \ud30c\ub791 */\n    .day-cell.night-shift .day-num { color: #4527a0; } /* \uc57c\uac04 = \uc9c4\ud55c \ubcf4\ub77c */\n    .day-cell.off-day .day-num     { color: #90a4ae; } /* \ud734\ubb34 = \ud68c\uc0c9 */\n\n    /* ------------------------------------------------\n       \uadfc\ubb34 \ub77c\ubca8 \uc2a4\ud0c0\uc77c (\uc8fc\uac04 / \uc57c\uac04 / \ud734\ubb34 \ud14d\uc2a4\ud2b8)\n    ------------------------------------------------ */\n    .shift-label {\n      font-size: 0.58rem; /* \uc544\uc8fc \uc791\uc740 \uae00\uc790 */\n      font-weight: 600;   /* \uc57d\uac04 \uad75\uac8c */\n      margin-top: 3px;    /* \uc22b\uc790\uc640\uc758 \uac04\uaca9 */\n    }\n\n    /* \uc720\ud615\ubcc4 \ub77c\ubca8 \uc0c9\uc0c1 */\n    .day-cell.day-shift .shift-label   { color: #4a90e2; } /* \uc8fc\uac04 = \ud30c\ub791 */\n    .day-cell.night-shift .shift-label { color: #7c57c8; } /* \uc57c\uac04 = \ubcf4\ub77c */\n    .day-cell.off-day .shift-label     { color: #b0bec5; } /* \ud734\ubb34 = \uc5f0\ud68c\uc0c9 */\n\n    /* \uc77c\uc694\uc77c/\ud1a0\uc694\uc77c \ub0a0\uc9dc \uc22b\uc790 \uc0c9\uc0c1 (\uadfc\ubb34 \uc0c9\ubcf4\ub2e4 \uc6b0\uc120 \uc801\uc6a9) */\n    .sun .day-num { color: #e57373 !important; } /* \uc77c\uc694\uc77c = \ube68\uac15 */\n    .sat .day-num { color: #64b5f6 !important; } /* \ud1a0\uc694\uc77c = \ud30c\ub791 */\n\n    /* ------------------------------------------------\n       .today-badge = \uc624\ub298 \ub0a0\uc9dc \uc6b0\uce21 \uc0c1\ub2e8 \uc8fc\ud669 \uc810\n    ------------------------------------------------ */\n    .today-badge {\n      position: absolute; /* \ubd80\ubaa8(.day-cell) \uae30\uc900 \uc808\ub300 \uc704\uce58 */\n      top: 4px;           /* \uc704\uc5d0\uc11c 4px */\n      right: 4px;         /* \uc624\ub978\ucabd\uc5d0\uc11c 4px */\n      width: 5px;         /* \uc810 \ub108\ube44 */\n      height: 5px;        /* \uc810 \ub192\uc774 */\n      background: #ff7043; /* \uc8fc\ud669\uc0c9 */\n      border-radius: 50%; /* 50% = \uc644\uc804\ud55c \uc6d0 */\n    }\n\n    /* ================================================\n       \ubc18\uc751\ud615 \ub514\uc790\uc778 (\ud654\uba74 \ud06c\uae30\ubcc4 \uc790\ub3d9 \uc870\uc815)\n       @media = \ud2b9\uc815 \ud654\uba74 \ud06c\uae30\uc77c \ub54c\ub9cc \uc801\uc6a9\ub418\ub294 \uc2a4\ud0c0\uc77c\n    ================================================ */\n\n    /* ------------------------------------------------\n       \uc2a4\ub9c8\ud2b8\ud3f0 \uc138\ub85c \ubaa8\ub4dc (\ud654\uba74 \ub108\ube44 480px \uc774\ud558)\n    ------------------------------------------------ */\n    @media (max-width: 480px) {\n      body { padding: 10px; }                          /* \uc804\uccb4 \uc5ec\ubc31 \uc904\uc774\uae30 */\n      .header { padding: 18px 12px; }                  /* \ud5e4\ub354 \uc5ec\ubc31 \uc904\uc774\uae30 */\n      .header h1 { font-size: 1.2rem; }                /* \uc81c\ubaa9 \uae00\uc790 \uc904\uc774\uae30 */\n      .header p { font-size: 0.75rem; }                /* \ubd80\uc81c\ubaa9 \uae00\uc790 \uc904\uc774\uae30 */\n      .legend-item { font-size: 0.72rem; padding: 5px 10px; } /* \ubc94\ub840 \ud06c\uae30 \uc904\uc774\uae30 */\n      .legend-dot { width: 20px; height: 20px; font-size: 0.62rem; } /* \ubc94\ub840 \ubc15\uc2a4 \uc904\uc774\uae30 */\n      .month-header { padding: 10px 12px; }            /* \uc6d4 \ud5e4\ub354 \uc5ec\ubc31 \uc904\uc774\uae30 */\n      .month-title { font-size: 0.9rem; }              /* \uc6d4 \uc81c\ubaa9 \uae00\uc790 \uc904\uc774\uae30 */\n      .stat { font-size: 0.65rem; padding: 2px 7px; }  /* \ubc30\uc9c0 \ud06c\uae30 \uc904\uc774\uae30 */\n      .calendar-grid { padding: 8px; }                 /* \ub2ec\ub825 \uc5ec\ubc31 \uc904\uc774\uae30 */\n      .days-grid { gap: 2px; }                         /* \ub0a0\uc9dc \uce78 \uac04\uaca9 \uc904\uc774\uae30 */\n      .weekdays { gap: 2px; }                          /* \uc694\uc77c \uac04\uaca9 \uc904\uc774\uae30 */\n      .day-cell { min-height: 44px; border-radius: 8px; } /* \ub0a0\uc9dc \uce78 \ub192\uc774 \uc904\uc774\uae30 */\n      .day-num { font-size: 0.82rem; }                 /* \ub0a0\uc9dc \uc22b\uc790 \uc904\uc774\uae30 */\n      .shift-label { font-size: 0.52rem; }             /* \ub77c\ubca8 \uae00\uc790 \uc904\uc774\uae30 */\n      .weekday { font-size: 0.62rem; }                 /* \uc694\uc77c \uae00\uc790 \uc904\uc774\uae30 */\n    }\n\n    /* ------------------------------------------------\n       \uc544\uc8fc \uc791\uc740 \ud654\uba74 (360px \uc774\ud558 - \uad6c\ud615 \uc18c\ud615 \uc2a4\ub9c8\ud2b8\ud3f0)\n    ------------------------------------------------ */\n    @media (max-width: 360px) {\n      .day-cell { min-height: 38px; }    /* \ub0a0\uc9dc \uce78 \ub192\uc774 \ub354 \uc904\uc774\uae30 */\n      .day-num { font-size: 0.75rem; }   /* \ub0a0\uc9dc \uc22b\uc790 \ub354 \uc904\uc774\uae30 */\n      .shift-label { display: none; }    /* \ub77c\ubca8 \uc228\uae30\uae30 (\ub108\ubb34 \uc881\uc544\uc11c) */\n      .today-badge { width: 4px; height: 4px; } /* \uc624\ub298 \uc810 \ud06c\uae30 \uc904\uc774\uae30 */\n    }\n\n  </style>\n  <!-- CSS \ub05d -->\n\n</head>\n\n<body>\n<!-- body = \ud654\uba74\uc5d0 \uc2e4\uc81c\ub85c \ubcf4\uc774\ub294 \ub0b4\uc6a9 \uc2dc\uc791 -->\n\n  <!-- \uc0c1\ub2e8 \uc81c\ubaa9 \uc601\uc5ed -->\n  <div class=\"header\">\n    <h1>\ud83d\uddd3\ufe0f \uad50\ub300 \ub2ec\ub825</h1>\n    <!-- \uba54\uc778 \uc81c\ubaa9 (\uc774\ubaa8\uc9c0 + \ud14d\uc2a4\ud2b8) -->\n\n    <p>A\uc870 &middot; 3\uc870 2\uad50\ub300 &middot; \uc8fc\uac04 4\uc77c \u2192 \ud734\ubb34 2\uc77c \u2192 \uc57c\uac04 4\uc77c \u2192 \ud734\ubb34 2\uc77c</p>\n    <!-- \uad50\ub300 \ud328\ud134 \uc124\uba85 / &middot; = \uac00\uc6b4\ub370 \uc810(\u00b7) \uae30\ud638 -->\n  </div>\n\n  <!-- \uc0c9\uc0c1 \ubc94\ub840 \uc601\uc5ed -->\n  <div class=\"legend\">\n\n    <div class=\"legend-item\">\n      <div class=\"legend-dot dot-day\">\uc8fc</div>\n      \uc8fc\uac04 \uadfc\ubb34\n    </div>\n    <!-- \uc8fc\uac04 \ubc94\ub840: \ud30c\ub780 \ubc15\uc2a4 + \"\uc8fc\uac04 \uadfc\ubb34\" \ud14d\uc2a4\ud2b8 -->\n\n    <div class=\"legend-item\">\n      <div class=\"legend-dot dot-night\">\uc57c</div>\n      \uc57c\uac04 \uadfc\ubb34\n    </div>\n    <!-- \uc57c\uac04 \ubc94\ub840: \ubcf4\ub77c \ubc15\uc2a4 + \"\uc57c\uac04 \uadfc\ubb34\" \ud14d\uc2a4\ud2b8 -->\n\n    <div class=\"legend-item\">\n      <div class=\"legend-dot dot-off\">\ud734</div>\n      \ud734\ubb34\n    </div>\n    <!-- \ud734\ubb34 \ubc94\ub840: \ud68c\uc0c9 \ubc15\uc2a4 + \"\ud734\ubb34\" \ud14d\uc2a4\ud2b8 -->\n\n  </div>\n\n  <!-- \uc6d4\ubcc4 \ub2ec\ub825 \uce74\ub4dc\ub4e4\uc774 JavaScript\uc5d0 \uc758\ud574 \uc5ec\uae30\uc5d0 \uc790\ub3d9\uc73c\ub85c \ucd94\uac00\ub428 -->\n  <div class=\"months-container\" id=\"months\"></div>\n\n  <script>\n  /* ================================================\n     JavaScript \uc2dc\uc791\n     JavaScript = \ud398\uc774\uc9c0\ub97c \ub3d9\uc801\uc73c\ub85c \ub9cc\ub4dc\ub294 \ud504\ub85c\uadf8\ub798\ubc0d \uc5b8\uc5b4\n  ================================================ */\n\n    /* ------------------------------------------------\n       \uad50\ub300 \ud328\ud134 \uc124\uc815\n       \u2605 \ud328\ud134\uc744 \ubc14\uafb8\uace0 \uc2f6\uc73c\uba74 \uc5ec\uae30\ub97c \uc218\uc815\ud558\uc138\uc694 \u2605\n    ------------------------------------------------ */\n    const PATTERN = ['\uc8fc','\uc8fc','\uc8fc','\uc8fc','\ud734','\ud734','\uc57c','\uc57c','\uc57c','\uc57c','\ud734','\ud734'];\n    /* 12\uc77c \uc8fc\uae30 \ubc30\uc5f4 */\n    /* \uc8fc = \uc8fc\uac04 \uadfc\ubb34, \uc57c = \uc57c\uac04 \uadfc\ubb34, \ud734 = \ud734\ubb34 */\n    /* \ud604\uc7ac \ud328\ud134: \uc8fc\uac044 \u2192 \ud734\ubb342 \u2192 \uc57c\uac044 \u2192 \ud734\ubb342 */\n\n    const START = new Date(2026, 2, 10);\n    /* A\uc870 \ud328\ud134 \uae30\uc900 \uc2dc\uc791\uc77c = 2026\ub144 3\uc6d4 10\uc77c (\uc8fc\uac04 \uc2dc\uc791) */\n    /* \u2605 \uc2dc\uc791\uc77c \ubc14\uafb8\ub824\uba74: new Date(\uc5f0\ub3c4, \uc6d4-1, \uc77c) \ud615\uc2dd\uc73c\ub85c \uc218\uc815 */\n    /* \uc8fc\uc758: \uc6d4\uc740 0\ubd80\ud130 \uc2dc\uc791\ud568 (1\uc6d4=0, 2\uc6d4=1, 3\uc6d4=2, ...) */\n\n    /* ------------------------------------------------\n       getShift(date) \ud568\uc218\n       \ud2b9\uc815 \ub0a0\uc9dc\uac00 \uc8fc\uac04/\uc57c\uac04/\ud734\ubb34\uc778\uc9c0 \uacc4\uc0b0\ud574\uc11c \ubc18\ud658\n    ------------------------------------------------ */\n    function getShift(date) {\n\n      const diff = Math.floor((date - START) / (1000 * 60 * 60 * 24));\n      /* date - START = \uc2dc\uc791\uc77c\ub85c\ubd80\ud130 \uba87 \ubc00\ub9ac\ucd08 \uc9c0\ub0ac\ub294\uc9c0 */\n      /* 1000 * 60 * 60 * 24 = \ud558\ub8e8\ub97c \ubc00\ub9ac\ucd08\ub85c \ud658\uc0b0 */\n      /* Math.floor = \uc18c\uc218\uc810 \ubc84\ub9ac\uace0 \uc815\uc218\ub9cc (\uba70\uce60 \uc9c0\ub0ac\ub294\uc9c0) */\n\n      return PATTERN[((diff % 12) + 12) % 12];\n      /* diff % 12 = 12\uc77c \uc8fc\uae30\ub85c \ub098\ub208 \ub098\uba38\uc9c0 (0~11) */\n      /* (+ 12) % 12 = \uc2dc\uc791\uc77c \uc774\uc804 \ub0a0\uc9dc\ub3c4 \uc62c\ubc14\ub974\uac8c \ucc98\ub9ac */\n      /* PATTERN[\uacb0\uacfc] = \ud574\ub2f9 \ub0a0\uc758 \uadfc\ubb34 \uc720\ud615 \ubc18\ud658 */\n    }\n\n    /* ------------------------------------------------\n       renderMonths() \ud568\uc218\n       \ub2ec\ub825 \uc804\uccb4\ub97c \ud654\uba74\uc5d0 \uadf8\ub824\uc8fc\ub294 \uba54\uc778 \ud568\uc218\n    ------------------------------------------------ */\n    function renderMonths() {\n\n      const container = document.getElementById('months');\n      /* id\uac00 'months'\uc778 HTML \uc694\uc18c \ucc3e\uae30 (\ub2ec\ub825 \uce74\ub4dc\ub4e4\uc774 \ub4e4\uc5b4\uac08 \uacf3) */\n\n      const today = new Date();\n      /* \uc624\ub298 \ub0a0\uc9dc \uac00\uc838\uc624\uae30 */\n\n      today.setHours(0, 0, 0, 0);\n      /* \uc2dc\uac04\uc744 00:00:00\uc73c\ub85c \ucd08\uae30\ud654 (\ub0a0\uc9dc \ube44\uad50\uc2dc \uc624\ub958 \ubc29\uc9c0) */\n\n      const monthNames = ['1\uc6d4','2\uc6d4','3\uc6d4','4\uc6d4','5\uc6d4','6\uc6d4','7\uc6d4','8\uc6d4','9\uc6d4','10\uc6d4','11\uc6d4','12\uc6d4'];\n      /* \uc6d4 \uc774\ub984 \ubc30\uc5f4 (\uc778\ub371\uc2a4 0 = 1\uc6d4, \uc778\ub371\uc2a4 11 = 12\uc6d4) */\n\n      const weekdays = ['\uc77c','\uc6d4','\ud654','\uc218','\ubaa9','\uae08','\ud1a0'];\n      /* \uc694\uc77c \uc774\ub984 \ubc30\uc5f4 (\uc778\ub371\uc2a4 0 = \uc77c\uc694\uc77c) */\n\n      /* \u2605 \ubcf4\uc5ec\uc904 \uc6d4 \ubc94\uc704 \uc124\uc815 \u2605 */\n      /* \ud604\uc7ac: m=2(3\uc6d4) ~ m=7(8\uc6d4) \ucd1d 6\uac1c\uc6d4 \ud45c\uc2dc */\n      /* \ubc14\uafb8\ub824\uba74 \uc22b\uc790 \uc218\uc815: m=0 \uc774\uba74 1\uc6d4, m=11 \uc774\uba74 12\uc6d4 */\n      for (let m = 2; m <= 7; m++) {\n\n        const year = 2026;\n        /* \u2605 \uc5f0\ub3c4 \uc124\uc815 - \ubc14\uafb8\ub824\uba74 \uc774 \uc22b\uc790 \uc218\uc815 \u2605 */\n\n        const firstDay = new Date(year, m, 1);\n        /* \ud574\ub2f9 \uc6d4 1\uc77c\uc758 Date \uac1d\uccb4 \uc0dd\uc131 */\n\n        const lastDay = new Date(year, m + 1, 0);\n        /* \ud574\ub2f9 \uc6d4 \ub9c8\uc9c0\ub9c9 \ub0a0\uc758 Date \uac1d\uccb4 \uc0dd\uc131 */\n        /* m+1\uc6d4\uc758 0\uc77c = \uc774\uc804 \uc6d4\uc758 \ub9c8\uc9c0\ub9c9 \ub0a0 (JS \ub0a0\uc9dc \ud2b8\ub9ad) */\n\n        const startDow = firstDay.getDay();\n        /* 1\uc77c\uc774 \ubb34\uc2a8 \uc694\uc77c\uc778\uc9c0 (0=\uc77c, 1=\uc6d4, ... 6=\ud1a0) */\n        /* \ub2ec\ub825 \uc55e \ube48 \uce78 \uac1c\uc218 \uacc4\uc0b0\uc5d0 \uc0ac\uc6a9 */\n\n        /* \ud574\ub2f9 \uc6d4 \uadfc\ubb34 \uc720\ud615\ubcc4 \uc77c\uc218 \uce74\uc6b4\ud2b8 */\n        let counts = { '\uc8fc': 0, '\uc57c': 0, '\ud734': 0 };\n        /* \ucd08\uae30\uac12 \ubaa8\ub450 0 */\n\n        for (let d = 1; d <= lastDay.getDate(); d++) {\n          /* d = 1\uc77c\ubd80\ud130 \ub9c8\uc9c0\ub9c9 \ub0a0\uae4c\uc9c0 \ubc18\ubcf5 */\n          counts[getShift(new Date(year, m, d))]++;\n          /* \ud574\ub2f9 \ub0a0\uc758 \uadfc\ubb34 \uc720\ud615\uc744 \uad6c\ud574\uc11c counts\uc5d0 1 \ucd94\uac00 */\n        }\n\n        /* \uc6d4 \uce74\ub4dc div \uc694\uc18c \uc0dd\uc131 */\n        const card = document.createElement('div');\n        card.className = 'month-card';\n        /* 'month-card' \ud074\ub798\uc2a4 \ubd80\uc5ec */\n\n        /* \uce74\ub4dc \uc548 HTML \ub0b4\uc6a9 \uc791\uc131 */\n        const dayCount   = counts['\uc8fc']; /* \uc8fc\uac04 \uc77c\uc218 \ubbf8\ub9ac \ubcc0\uc218\ub85c \uc800\uc7a5 */\n        const nightCount = counts['\uc57c']; /* \uc57c\uac04 \uc77c\uc218 \ubbf8\ub9ac \ubcc0\uc218\ub85c \uc800\uc7a5 */\n        const offCount   = counts['\ud734']; /* \ud734\ubb34 \uc77c\uc218 \ubbf8\ub9ac \ubcc0\uc218\ub85c \uc800\uc7a5 */\n\n        card.innerHTML = `\n          <div class=\"month-header\">\n\n            <div class=\"month-title\">${year}\ub144 ${monthNames[m]}</div>\n            <!-- \uc608: \"2026\ub144 3\uc6d4\" / ${}\ub294 \ubcc0\uc218 \uac12\uc744 \ud14d\uc2a4\ud2b8\uc5d0 \uc0bd\uc785 -->\n\n            <div class=\"month-stats\">\n              <span class=\"stat stat-day\">\uc8fc\uac04 ${dayCount}\uc77c</span>\n              <!-- \uc8fc\uac04 \uadfc\ubb34 \uc77c\uc218 \ubc30\uc9c0 -->\n              <span class=\"stat stat-night\">\uc57c\uac04 ${nightCount}\uc77c</span>\n              <!-- \uc57c\uac04 \uadfc\ubb34 \uc77c\uc218 \ubc30\uc9c0 -->\n              <span class=\"stat stat-off\">\ud734\ubb34 ${offCount}\uc77c</span>\n              <!-- \ud734\ubb34 \uc77c\uc218 \ubc30\uc9c0 -->\n            </div>\n\n          </div>\n\n          <div class=\"calendar-grid\">\n\n            <div class=\"weekdays\">\n              ${weekdays.map(w => `<div class=\"weekday\">${w}</div>`).join('')}\n              <!-- weekdays \ubc30\uc5f4\uc744 div\ub85c \ubcc0\ud658\ud574\uc11c \uc774\uc5b4\ubd99\uc784 -->\n              <!-- .map() = \ubc30\uc5f4 \uac01 \ud56d\ubaa9\uc744 \ubcc0\ud658 -->\n              <!-- .join('') = \ubcc0\ud658\ub41c \ud56d\ubaa9\ub4e4\uc744 \uc774\uc5b4\ubd99\uc784 -->\n            </div>\n\n            <div class=\"days-grid\" id=\"grid-${m}\"></div>\n            <!-- \ub0a0\uc9dc \uce78\ub4e4\uc774 \ub4e4\uc5b4\uac08 \uadf8\ub9ac\ub4dc (\uc544\ub798 JS\ucf54\ub4dc\uac00 \ucc44\uc6cc\uc90c) -->\n            <!-- id\ub294 \uc6d4\ub9c8\ub2e4 \uace0\uc720\ud558\uac8c \ubd80\uc5ec (grid-2, grid-3 ...) -->\n\n          </div>\n        `;\n\n        container.appendChild(card);\n        /* \uc644\uc131\ub41c \uce74\ub4dc\ub97c months \ucee8\ud14c\uc774\ub108\uc5d0 \ucd94\uac00 */\n\n        const grid = card.querySelector(`#grid-${m}`);\n        /* \uce74\ub4dc \uc548\uc5d0\uc11c \ub0a0\uc9dc \uadf8\ub9ac\ub4dc \uc694\uc18c \ucc3e\uae30 */\n\n        /* \ub2ec\ub825 \uc55e \ube48 \uce78 \ucc44\uc6b0\uae30 */\n        /* \uc608: 1\uc77c\uc774 \uc218\uc694\uc77c(3)\uc774\uba74 \uc77c/\uc6d4/\ud654 \uc790\ub9ac\uc5d0 \ube48 \uce78 3\uac1c \ucd94\uac00 */\n        for (let i = 0; i < startDow; i++) {\n          const emptyCell = document.createElement('div');\n          emptyCell.className = 'day-cell empty'; /* \ube48 \uce78 \ud074\ub798\uc2a4 */\n          grid.appendChild(emptyCell);\n        }\n\n        /* \ub0a0\uc9dc \uce78 \ucc44\uc6b0\uae30 (1\uc77c\ubd80\ud130 \ub9c8\uc9c0\ub9c9 \ub0a0\uae4c\uc9c0) */\n        for (let d = 1; d <= lastDay.getDate(); d++) {\n\n          const date = new Date(year, m, d);\n          /* \ud574\ub2f9 \ub0a0\uc9dc\uc758 Date \uac1d\uccb4 \uc0dd\uc131 */\n\n          const shift = getShift(date);\n          /* \ud574\ub2f9 \ub0a0\uc758 \uadfc\ubb34 \uc720\ud615 ('\uc8fc' or '\uc57c' or '\ud734') */\n\n          const dow = date.getDay();\n          /* \ud574\ub2f9 \ub0a0\uc758 \uc694\uc77c (0=\uc77c, 1=\uc6d4, ... 6=\ud1a0) */\n\n          const isToday = date.getTime() === today.getTime();\n          /* \uc624\ub298\uc778\uc9c0 \ud655\uc778 */\n          /* .getTime() = \ubc00\ub9ac\ucd08 \uc22b\uc790\ub85c \ubcc0\ud658\ud574\uc11c \uc815\ud655\ud558\uac8c \ube44\uad50 */\n          /* true = \uc624\ub298, false = \uc624\ub298 \uc544\ub2d8 */\n\n          const cell = document.createElement('div');\n          /* \ub0a0\uc9dc \uce78 div \uc0dd\uc131 */\n\n          /* \ud074\ub798\uc2a4 \uc870\ud569 */\n          let cls = 'day-cell';                              /* \uae30\ubcf8 \ud074\ub798\uc2a4 */\n          if (shift === '\uc8fc')      cls += ' day-shift';      /* \uc8fc\uac04\uc774\uba74 \ucd94\uac00 */\n          else if (shift === '\uc57c') cls += ' night-shift';    /* \uc57c\uac04\uc774\uba74 \ucd94\uac00 */\n          else                    cls += ' off-day';         /* \ud734\ubb34\uc774\uba74 \ucd94\uac00 */\n          if (dow === 0) cls += ' sun';                      /* \uc77c\uc694\uc77c\uc774\uba74 \ucd94\uac00 */\n          if (dow === 6) cls += ' sat';                      /* \ud1a0\uc694\uc77c\uc774\uba74 \ucd94\uac00 */\n          if (isToday)  cls += ' today';                     /* \uc624\ub298\uc774\uba74 \ucd94\uac00 */\n\n          cell.className = cls;\n          /* \uc644\uc131\ub41c \ud074\ub798\uc2a4 \uc801\uc6a9 */\n\n          /* \ub0a0\uc9dc \uce78 \uc548 HTML \ub0b4\uc6a9 */\n          cell.innerHTML = `\n            <span class=\"day-num\">${d}</span>\n            <!-- \ub0a0\uc9dc \uc22b\uc790 \ud45c\uc2dc (\uc608: 10) -->\n\n            <span class=\"shift-label\">${shift === '\uc8fc' ? '\uc8fc\uac04' : shift === '\uc57c' ? '\uc57c\uac04' : '\ud734\ubb34'}</span>\n            <!-- \uadfc\ubb34 \ub77c\ubca8 \ud45c\uc2dc -->\n            <!-- \uc0bc\ud56d \uc5f0\uc0b0\uc790: \uc870\uac74 ? \ucc38\uc77c\ub54c : \uac70\uc9d3\uc77c\ub54c -->\n            <!-- shift\uac00 '\uc8fc'\uba74 '\uc8fc\uac04', '\uc57c'\uba74 '\uc57c\uac04', \uadf8 \uc678\uba74 '\ud734\ubb34' -->\n\n            ${isToday ? '<div class=\"today-badge\"></div>' : ''}\n            <!-- \uc624\ub298\uc774\uba74 \uc8fc\ud669 \uc810 \ucd94\uac00, \uc544\ub2c8\uba74 \uc544\ubb34\uac83\ub3c4 \ucd94\uac00 \uc548 \ud568 -->\n          `;\n\n          grid.appendChild(cell);\n          /* \uc644\uc131\ub41c \ub0a0\uc9dc \uce78\uc744 \uadf8\ub9ac\ub4dc\uc5d0 \ucd94\uac00 */\n        }\n        /* \ub0a0\uc9dc \ub8e8\ud504 \ub05d */\n\n      }\n      /* \uc6d4 \ub8e8\ud504 \ub05d */\n\n    }\n    /* renderMonths \ud568\uc218 \ub05d */\n\n    renderMonths();\n    /* \ud568\uc218 \ud638\ucd9c = \ud398\uc774\uc9c0 \ub85c\ub4dc\uc2dc \ub2ec\ub825\uc744 \ud654\uba74\uc5d0 \uadf8\ub9bc */\n\n  </script>\n  <!-- JavaScript \ub05d -->\n\n  <script>\n    /* ------------------------------------------------\n       PWA Service Worker \ub4f1\ub85d\n       \uc774 \ucf54\ub4dc\uac00 \uc788\uc5b4\uc57c \uc624\ud504\ub77c\uc778\uc5d0\uc11c\ub3c4 \uc571\uc774 \uc791\ub3d9\ud558\uace0\n       \ud648 \ud654\uba74\uc5d0 \uc571\ucc98\ub7fc \ucd94\uac00\ud560 \uc218 \uc788\uc74c\n    ------------------------------------------------ */\n    if ('serviceWorker' in navigator) {\n      /* \ube0c\ub77c\uc6b0\uc800\uac00 Service Worker\ub97c \uc9c0\uc6d0\ud558\ub294\uc9c0 \ud655\uc778 */\n\n      window.addEventListener('load', () => {\n        /* \ud398\uc774\uc9c0\uac00 \uc644\uc804\ud788 \ub85c\ub4dc\ub41c \ud6c4\uc5d0 \ub4f1\ub85d */\n\n        navigator.serviceWorker.register('/shift-calendar/service-worker.js')\n          .then(() => console.log('\u2705 Service Worker \ub4f1\ub85d \uc131\uacf5!'))\n          /* \ub4f1\ub85d \uc131\uacf5\uc2dc \ucf58\uc194\uc5d0 \uba54\uc2dc\uc9c0 \ucd9c\ub825 */\n\n          .catch(err => console.log('\u274c Service Worker \ub4f1\ub85d \uc2e4\ud328:', err));\n          /* \ub4f1\ub85d \uc2e4\ud328\uc2dc \uc624\ub958 \uba54\uc2dc\uc9c0 \ucd9c\ub825 */\n      });\n    }\n  </script>\n  <!-- PWA Service Worker \ub4f1\ub85d \ub05d -->\n\n</body>\n<!-- body \ub05d -->\n\n</html>\n<!-- HTML \ubb38\uc11c \ub05d -->\n";
+  <div class="months-container" id="months"></div>
 
-// 코드 표시
-const codeEl = document.getElementById('codeContent');
-const lines = rawCode.split('\n');
-let html = '';
-lines.forEach((line, i) => {
-  const ln = i + 1;
-  const escaped = line
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-  html += `<div class="line"><span class="ln">${ln}</span><span class="lc">${escaped}</span></div>`;
-});
-codeEl.innerHTML = html;
+  <script>
+    var PATTERN = ['주','주','주','주','휴','휴','야','야','야','야','휴','휴'];
+    var START = new Date(2026, 2, 10);
 
-// 복사 기능
-function copyCode() {
-  navigator.clipboard.writeText(rawCode).then(() => {
-    const btn = document.getElementById('copyBtn');
-    btn.textContent = '✅ 복사됨!';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = '⎘ 전체 복사';
-      btn.classList.remove('copied');
-    }, 2000);
-  }).catch(() => {
-    // fallback
-    const ta = document.createElement('textarea');
-    ta.value = rawCode;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    const btn = document.getElementById('copyBtn');
-    btn.textContent = '✅ 복사됨!';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = '⎘ 전체 복사';
-      btn.classList.remove('copied');
-    }, 2000);
-  });
-}
-</script>
+    function getShift(date) {
+      var diff = Math.floor((date - START) / (1000 * 60 * 60 * 24));
+      return PATTERN[((diff % 12) + 12) % 12];
+    }
+
+    function renderMonths() {
+      var container = document.getElementById('months');
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+      var weekdays = ['일','월','화','수','목','금','토'];
+
+      for (var m = 2; m <= 7; m++) {
+        var year = 2026;
+        var firstDay = new Date(year, m, 1);
+        var lastDay = new Date(year, m + 1, 0);
+        var startDow = firstDay.getDay();
+
+        var dayCount = 0, nightCount = 0, offCount = 0;
+        for (var d = 1; d <= lastDay.getDate(); d++) {
+          var s = getShift(new Date(year, m, d));
+          if (s === '주') dayCount++;
+          else if (s === '야') nightCount++;
+          else offCount++;
+        }
+
+        var card = document.createElement('div');
+        card.className = 'month-card';
+
+        var header = document.createElement('div');
+        header.className = 'month-header';
+        header.innerHTML =
+          '<div class="month-title">' + year + '년 ' + monthNames[m] + '</div>' +
+          '<div class="month-stats">' +
+            '<span class="stat stat-day">주간 ' + dayCount + '일</span>' +
+            '<span class="stat stat-night">야간 ' + nightCount + '일</span>' +
+            '<span class="stat stat-off">휴무 ' + offCount + '일</span>' +
+          '</div>';
+        card.appendChild(header);
+
+        var calGrid = document.createElement('div');
+        calGrid.className = 'calendar-grid';
+
+        var wdRow = document.createElement('div');
+        wdRow.className = 'weekdays';
+        for (var w = 0; w < weekdays.length; w++) {
+          var wd = document.createElement('div');
+          wd.className = 'weekday';
+          wd.textContent = weekdays[w];
+          wdRow.appendChild(wd);
+        }
+        calGrid.appendChild(wdRow);
+
+        var daysGrid = document.createElement('div');
+        daysGrid.className = 'days-grid';
+
+        for (var i = 0; i < startDow; i++) {
+          var empty = document.createElement('div');
+          empty.className = 'day-cell empty';
+          daysGrid.appendChild(empty);
+        }
+
+        for (var d = 1; d <= lastDay.getDate(); d++) {
+          var date = new Date(year, m, d);
+          var shift = getShift(date);
+          var dow = date.getDay();
+          var isToday = date.getTime() === today.getTime();
+
+          var cell = document.createElement('div');
+          var cls = 'day-cell';
+          if (shift === '주') cls += ' day-shift';
+          else if (shift === '야') cls += ' night-shift';
+          else cls += ' off-day';
+          if (dow === 0) cls += ' sun';
+          if (dow === 6) cls += ' sat';
+          if (isToday) cls += ' today';
+          cell.className = cls;
+
+          var numSpan = document.createElement('span');
+          numSpan.className = 'day-num';
+          numSpan.textContent = d;
+          cell.appendChild(numSpan);
+
+          var labelSpan = document.createElement('span');
+          labelSpan.className = 'shift-label';
+          labelSpan.textContent = shift === '주' ? '주간' : shift === '야' ? '야간' : '휴무';
+          cell.appendChild(labelSpan);
+
+          if (isToday) {
+            var badge = document.createElement('div');
+            badge.className = 'today-badge';
+            cell.appendChild(badge);
+          }
+
+          daysGrid.appendChild(cell);
+        }
+
+        calGrid.appendChild(daysGrid);
+        card.appendChild(calGrid);
+        container.appendChild(card);
+      }
+    }
+
+    renderMonths();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/shift-calendar/service-worker.js');
+      });
+    }
+  </script>
+
 </body>
 </html>
