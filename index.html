@@ -490,6 +490,10 @@
         /* 'month-card' 클래스 부여 */
 
         /* 카드 안 HTML 내용 작성 */
+        const dayCount   = counts['주']; /* 주간 일수 미리 변수로 저장 */
+        const nightCount = counts['야']; /* 야간 일수 미리 변수로 저장 */
+        const offCount   = counts['휴']; /* 휴무 일수 미리 변수로 저장 */
+
         card.innerHTML = `
           <div class="month-header">
 
@@ -497,11 +501,11 @@
             <!-- 예: "2026년 3월" / ${}는 변수 값을 텍스트에 삽입 -->
 
             <div class="month-stats">
-              <span class="stat stat-day">주간 ${counts['주']}일</span>
+              <span class="stat stat-day">주간 ${dayCount}일</span>
               <!-- 주간 근무 일수 배지 -->
-              <span class="stat stat-night">야간 ${counts['야']}일</span>
+              <span class="stat stat-night">야간 ${nightCount}일</span>
               <!-- 야간 근무 일수 배지 -->
-              <span class="stat stat-off">휴무 ${counts['휴']}일</span>
+              <span class="stat stat-off">휴무 ${offCount}일</span>
               <!-- 휴무 일수 배지 -->
             </div>
 
