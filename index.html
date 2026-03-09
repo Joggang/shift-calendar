@@ -601,30 +601,27 @@
   <!-- JavaScript 끝 -->
 
   <script>
-    // PWA Service Worker 등록
-    // 브라우저가 Service Worker를 지원하면 등록 실행
+    /* ------------------------------------------------
+       PWA Service Worker 등록
+       이 코드가 있어야 오프라인에서도 앱이 작동하고
+       홈 화면에 앱처럼 추가할 수 있음
+    ------------------------------------------------ */
     if ('serviceWorker' in navigator) {
+      /* 브라우저가 Service Worker를 지원하는지 확인 */
+
       window.addEventListener('load', () => {
+        /* 페이지가 완전히 로드된 후에 등록 */
+
         navigator.serviceWorker.register('/shift-calendar/service-worker.js')
-          .then(() => console.log('Service Worker 등록 성공!'))
-          .catch(err => console.log('Service Worker 등록 실패:', err));
+          .then(() => console.log('✅ Service Worker 등록 성공!'))
+          /* 등록 성공시 콘솔에 메시지 출력 */
+
+          .catch(err => console.log('❌ Service Worker 등록 실패:', err));
+          /* 등록 실패시 오류 메시지 출력 */
       });
     }
   </script>
-```
-
-4. **"Commit changes"** 클릭!
-
----
-
-현재 `index.html` 맨 아래가 이렇게 되어야 해요:
-```
-    renderMonths();
-
-  </script>
-  <!-- JavaScript 끝 -->
-
-</body>  ← 이 바로 위에 추가!
+  <!-- PWA Service Worker 등록 끝 -->
 
 </body>
 <!-- body 끝 -->
